@@ -1,6 +1,35 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { QuestionView } from "./QuestionView";
+import { ResultView } from "./ResultView";
+
+type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
+
+type LeaderboardRow = {
+  participantId: string;
+  nickname: string;
+  totalPoints: number;
+};
+
+type StateResponse = {
+  status: RunStatus;
+  question?: {
+    id: string;
+    text: string;
+    options: { id: string; text: string }[];
+    closesAt?: string | null;
+    correctOptionId?: string | null;
+  };
+  hasSubmitted?: boolean;
+  myResult?: {
+    selectedOptionId: string;
+    isCorrect: boolean;
+    awardedPoints: number;
+  } | null;
+  leaderboard?: LeaderboardRow[];
+  myRank?: number | null;
+};
 
 export function WaitingRoom({
   joinCode,
@@ -11,6 +40,11 @@ export function WaitingRoom({
   quizTitle: string;
   nickname: string;
 }) {
+  const [state, setState] = useState<StateResponse | null>(null);
+
+  // Heartbeat: separate from the state poll, 15s interval, purely for the
+  // presenter's online/offline display. See git history for the
+  // first-ping cookie-propagation-race retry this already handles.
   useEffect(() => {
     let cancelled = false;
 
@@ -19,11 +53,6 @@ export function WaitingRoom({
         const res = await fetch(`/room/${joinCode}/heartbeat`, {
           method: "POST",
         });
-        // The very first ping can race the cookie set by joinRoomAction's
-        // redirect-free router.refresh() in production (observed as a
-        // one-off 401 that a retry a moment later always resolves). Retry
-        // once after a short delay rather than silently waiting a full
-        // 15s for the next interval tick.
         if (res.status === 401 && !isRetry && !cancelled) {
           setTimeout(() => ping(true), 1000);
         }
@@ -39,6 +68,60 @@ export function WaitingRoom({
       clearInterval(interval);
     };
   }, [joinCode]);
+
+  // State poll: drives which screen (lobby / question / result) is shown.
+  useEffect(() => {
+    let cancelled = false;
+
+    async function poll() {
+      try {
+        const res = await fetch(`/room/${joinCode}/state`);
+        if (!res.ok) return;
+        const json = (await res.json()) as StateResponse;
+        if (!cancelled) setState(json);
+      } catch {
+        // Transient network error -- next poll tick will retry.
+      }
+    }
+
+    poll();
+    const interval = setInterval(poll, 2500);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [joinCode]);
+
+  if (state?.status === "QUESTION_OPEN" && state.question) {
+    return (
+      <QuestionView
+        key={state.question.id}
+        joinCode={joinCode}
+        questionText={state.question.text}
+        options={state.question.options}
+        closesAt={state.question.closesAt ?? null}
+        hasSubmitted={state.hasSubmitted ?? false}
+        runQuestionId={state.question.id}
+      />
+    );
+  }
+
+  if (
+    (state?.status === "LEADERBOARD" || state?.status === "FINISHED") &&
+    state.question
+  ) {
+    return (
+      <ResultView
+        questionText={state.question.text}
+        options={state.question.options}
+        correctOptionId={state.question.correctOptionId ?? null}
+        myResult={state.myResult ?? null}
+        leaderboard={state.leaderboard ?? []}
+        myRank={state.myRank ?? null}
+        finished={state.status === "FINISHED"}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4">
