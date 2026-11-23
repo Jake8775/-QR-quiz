@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { SafetyBackdrop } from "./SafetyBackdrop";
 
 function computeRemaining(closesAt: string): number {
   return Math.max(0, Math.ceil((new Date(closesAt).getTime() - Date.now()) / 1000));
@@ -69,8 +70,9 @@ export function QuestionView({
 
   if (localSubmitted) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4">
-        <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-50 px-4">
+        <SafetyBackdrop />
+        <div className="relative w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <p className="text-lg font-medium text-zinc-900">
             제출 완료! 결과를 기다려주세요.
           </p>
@@ -80,8 +82,9 @@ export function QuestionView({
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+    <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-50 px-4">
+      <SafetyBackdrop />
+      <div className="relative w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
         {remaining !== null && (
           <p className="mb-2 text-center text-sm text-zinc-500">
             남은 시간 {remaining}초

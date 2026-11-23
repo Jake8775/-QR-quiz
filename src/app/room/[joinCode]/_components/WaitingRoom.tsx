@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { QuestionView } from "./QuestionView";
 import { ResultView } from "./ResultView";
 import { ReactionBar } from "./ReactionBar";
+import { SafetyBackdrop } from "./SafetyBackdrop";
 
 type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
 
@@ -123,8 +124,9 @@ export function WaitingRoom({
     );
   } else {
     content = (
-      <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4">
-        <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-50 px-4">
+        <SafetyBackdrop />
+        <div className="relative w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
           <p className="mb-1 text-sm text-zinc-500">{quizTitle}</p>
           <p className="mb-4 text-lg font-medium text-zinc-900">
             {nickname}님, 대기실에 입장했습니다
