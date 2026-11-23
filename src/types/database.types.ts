@@ -246,6 +246,7 @@ export interface Database {
           joined_at: string;
           last_seen_at: string;
           participant_session_id: string;
+          last_reaction_at: string | null;
         };
         Insert: {
           id?: string;
@@ -254,6 +255,7 @@ export interface Database {
           joined_at?: string;
           last_seen_at?: string;
           participant_session_id?: string;
+          last_reaction_at?: string | null;
         };
         Update: {
           id?: string;
@@ -262,6 +264,33 @@ export interface Database {
           joined_at?: string;
           last_seen_at?: string;
           participant_session_id?: string;
+          last_reaction_at?: string | null;
+        };
+      };
+      reactions: {
+        Row: {
+          id: string;
+          seq: number;
+          run_id: string;
+          participant_id: string;
+          emoji: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          seq?: number;
+          run_id: string;
+          participant_id: string;
+          emoji: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          seq?: number;
+          run_id?: string;
+          participant_id?: string;
+          emoji?: string;
+          created_at?: string;
         };
       };
       answers: {

@@ -1,5 +1,7 @@
 "use client";
 
+import { RankingList } from "./RankingList";
+
 type LeaderboardRow = {
   participantId: string;
   nickname: string;
@@ -7,9 +9,6 @@ type LeaderboardRow = {
 };
 
 export function LeaderboardDashboard({
-  questionText,
-  options,
-  correctOptionId,
   correctCount,
   totalParticipants,
   leaderboard,
@@ -17,9 +16,6 @@ export function LeaderboardDashboard({
   onNext,
   submitting,
 }: {
-  questionText: string;
-  options: { id: string; text: string }[];
-  correctOptionId: string | null;
   correctCount: number;
   totalParticipants: number;
   leaderboard: LeaderboardRow[];
@@ -28,48 +24,21 @@ export function LeaderboardDashboard({
   submitting: boolean;
 }) {
   return (
-    <div>
-      <h2 className="mb-3 text-lg font-medium text-zinc-900">
-        {questionText}
-      </h2>
-      <div className="flex flex-col gap-1">
-        {options.map((o) => (
-          <div
-            key={o.id}
-            className={`rounded-md border px-3 py-2 text-sm ${
-              o.id === correctOptionId
-                ? "border-green-500 bg-green-50 font-medium text-green-700"
-                : "border-zinc-200"
-            }`}
-          >
-            {o.text}
-          </div>
-        ))}
-      </div>
-
-      <p className="mt-3 text-sm text-zinc-500">
+    <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center">
+      <p className="text-sm text-zinc-500">
         정답자 {correctCount} / {totalParticipants}
       </p>
+      <h2 className="mt-2 mb-6 text-3xl font-semibold text-zinc-900 sm:text-4xl">
+        이번 라운드 순위
+      </h2>
 
-      <p className="mt-4 mb-1 text-sm font-medium text-zinc-900">누적 순위</p>
-      <div className="flex flex-col gap-1">
-        {leaderboard.map((row, i) => (
-          <div
-            key={row.participantId}
-            className="flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm"
-          >
-            <span className="w-6 text-zinc-400">{i + 1}</span>
-            <span>{row.nickname}</span>
-            <span className="ml-auto font-medium">{row.totalPoints}점</span>
-          </div>
-        ))}
-      </div>
+      <RankingList leaderboard={leaderboard} />
 
       <button
         type="button"
         disabled={submitting}
         onClick={onNext}
-        className="mt-3 rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="mt-8 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white disabled:opacity-50"
       >
         {isLastQuestion ? "퀴즈 종료" : "다음 문제"}
       </button>

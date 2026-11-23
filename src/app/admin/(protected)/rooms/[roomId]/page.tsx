@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getRoomForPresenter } from "./queries";
-import { JoinQr } from "./_components/JoinQr";
 import { LobbyClient } from "./_components/LobbyClient";
 
 async function resolveOrigin() {
@@ -29,17 +28,10 @@ export default async function RoomLobbyPage({
   const joinUrl = `${origin}/room/${room.publicJoinCode}`;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <p className="text-sm text-zinc-500">대기실</p>
-      <h1 className="mb-6 text-lg font-semibold text-zinc-900">
-        {room.quizTitle}
-      </h1>
-
-      <JoinQr joinUrl={joinUrl} />
-
-      <div className="mt-6">
-        <LobbyClient roomId={room.id} />
-      </div>
-    </div>
+    <LobbyClient
+      roomId={room.id}
+      joinUrl={joinUrl}
+      quizTitle={room.quizTitle}
+    />
   );
 }

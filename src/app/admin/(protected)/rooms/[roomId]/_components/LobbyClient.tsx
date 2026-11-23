@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { JoinQr } from "./JoinQr";
 import { QuestionDashboard } from "./QuestionDashboard";
 import { LeaderboardDashboard } from "./LeaderboardDashboard";
+import { RankingList } from "./RankingList";
+import { ReactionOverlay } from "./ReactionOverlay";
 
 type Participant = { id: string; nickname: string; online: boolean };
 type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
@@ -31,7 +34,15 @@ type RunStatusResponse = {
   leaderboard?: LeaderboardRow[];
 };
 
-export function LobbyClient({ roomId }: { roomId: string }) {
+export function LobbyClient({
+  roomId,
+  joinUrl,
+  quizTitle,
+}: {
+  roomId: string;
+  joinUrl: string;
+  quizTitle: string;
+}) {
   const [data, setData] = useState<RunStatusResponse | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -76,63 +87,80 @@ export function LobbyClient({ roomId }: { roomId: string }) {
     }
   }
 
+  let content;
+
   if (!data) {
-    return <p className="text-sm text-zinc-400">불러오는 중...</p>;
-  }
+    content = (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-zinc-400">불러오는 중...</p>
+      </div>
+    );
+  } else if (data.status === "LOBBY") {
+    content = (
+      <div className="flex min-h-screen flex-col px-6 py-8">
+        {actionError && (
+          <p className="mb-4 text-center text-sm text-red-600">{actionError}</p>
+        )}
 
-  return (
-    <div className="flex flex-col gap-4">
-      {actionError && <p className="text-sm text-red-600">{actionError}</p>}
+        <div className="grid flex-1 grid-cols-1 gap-8 lg:grid-cols-2">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <p className="text-lg text-zinc-500">{quizTitle}</p>
+            <JoinQr joinUrl={joinUrl} />
+          </div>
 
-      {data.status === "LOBBY" && (
-        <>
-          <div>
-            <p className="text-sm text-zinc-500">참가자 {data.count}명</p>
-            <div className="mt-2 flex flex-col gap-1">
+          <div className="flex flex-col items-center justify-center gap-4">
+            <h2 className="text-2xl font-semibold text-zinc-900 sm:text-3xl">
+              참가자 {data.count}명
+            </h2>
+            <div className="max-h-[60vh] w-full max-w-xl overflow-y-auto">
               {data.participants.length === 0 ? (
-                <p className="text-sm text-zinc-400">
+                <p className="text-center text-lg text-zinc-400">
                   아직 입장한 참가자가 없습니다.
                 </p>
               ) : (
-                data.participants.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm"
-                  >
-                    <span
-                      className={`h-2 w-2 rounded-full ${
-                        p.online ? "bg-green-500" : "bg-zinc-300"
-                      }`}
-                    />
-                    <span>{p.nickname}</span>
-                    <span className="ml-auto text-xs text-zinc-400">
-                      {p.online ? "온라인" : "자리비움"}
-                    </span>
-                  </div>
-                ))
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {data.participants.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-3 text-lg"
+                    >
+                      <span
+                        className={`h-3 w-3 shrink-0 rounded-full ${
+                          p.online ? "bg-green-500" : "bg-zinc-300"
+                        }`}
+                      />
+                      <span className="truncate">{p.nickname}</span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
+        </div>
 
-          <div>
-            <button
-              type="button"
-              disabled={data.count === 0 || submitting}
-              onClick={() => callAction("start")}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              퀴즈 시작
-            </button>
-            {data.count === 0 && (
-              <p className="mt-1 text-xs text-zinc-400">
-                참가자가 입장해야 시작할 수 있습니다.
-              </p>
-            )}
-          </div>
-        </>
-      )}
-
-      {data.status === "QUESTION_OPEN" && data.question && (
+        <div className="flex flex-col items-center gap-2 pt-6">
+          <button
+            type="button"
+            disabled={data.count === 0 || submitting}
+            onClick={() => callAction("start")}
+            className="rounded-md bg-zinc-900 px-10 py-4 text-xl font-medium text-white disabled:opacity-50"
+          >
+            퀴즈 시작
+          </button>
+          {data.count === 0 && (
+            <p className="text-sm text-zinc-400">
+              참가자가 입장해야 시작할 수 있습니다.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  } else if (data.status === "QUESTION_OPEN" && data.question) {
+    content = (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        {actionError && (
+          <p className="mb-4 text-sm text-red-600">{actionError}</p>
+        )}
         <QuestionDashboard
           questionText={data.question.text}
           options={data.question.options}
@@ -144,13 +172,15 @@ export function LobbyClient({ roomId }: { roomId: string }) {
           onReveal={() => callAction("reveal")}
           submitting={submitting}
         />
-      )}
-
-      {data.status === "LEADERBOARD" && data.question && (
+      </div>
+    );
+  } else if (data.status === "LEADERBOARD") {
+    content = (
+      <div className="flex min-h-screen flex-col items-center justify-center">
+        {actionError && (
+          <p className="mb-4 text-sm text-red-600">{actionError}</p>
+        )}
         <LeaderboardDashboard
-          questionText={data.question.text}
-          options={data.question.options}
-          correctOptionId={data.question.correctOptionId ?? null}
           correctCount={data.correctCount ?? 0}
           totalParticipants={data.count}
           leaderboard={data.leaderboard ?? []}
@@ -160,29 +190,25 @@ export function LobbyClient({ roomId }: { roomId: string }) {
           onNext={() => callAction("next")}
           submitting={submitting}
         />
-      )}
-
-      {data.status === "FINISHED" && (
-        <div>
-          <p className="mb-3 text-sm font-medium text-zinc-900">
-            퀴즈가 종료되었습니다
-          </p>
-          <div className="flex flex-col gap-1">
-            {(data.leaderboard ?? []).map((row, i) => (
-              <div
-                key={row.participantId}
-                className="flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm"
-              >
-                <span className="w-6 text-zinc-400">{i + 1}</span>
-                <span>{row.nickname}</span>
-                <span className="ml-auto font-medium">
-                  {row.totalPoints}점
-                </span>
-              </div>
-            ))}
-          </div>
+      </div>
+    );
+  } else {
+    content = (
+      <div className="flex min-h-screen flex-col items-center justify-center px-4">
+        <h2 className="mb-6 text-3xl font-semibold text-zinc-900 sm:text-4xl">
+          퀴즈가 종료되었습니다
+        </h2>
+        <div className="w-full max-w-2xl">
+          <RankingList leaderboard={data.leaderboard ?? []} />
         </div>
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {content}
+      <ReactionOverlay roomId={roomId} />
+    </>
   );
 }

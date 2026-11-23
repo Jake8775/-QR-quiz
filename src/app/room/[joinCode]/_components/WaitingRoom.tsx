@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { QuestionView } from "./QuestionView";
 import { ResultView } from "./ResultView";
+import { ReactionBar } from "./ReactionBar";
 
 type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
 
@@ -92,8 +93,9 @@ export function WaitingRoom({
     };
   }, [joinCode]);
 
+  let content;
   if (state?.status === "QUESTION_OPEN" && state.question) {
-    return (
+    content = (
       <QuestionView
         key={state.question.id}
         joinCode={joinCode}
@@ -104,13 +106,11 @@ export function WaitingRoom({
         runQuestionId={state.question.id}
       />
     );
-  }
-
-  if (
+  } else if (
     (state?.status === "LEADERBOARD" || state?.status === "FINISHED") &&
     state.question
   ) {
-    return (
+    content = (
       <ResultView
         questionText={state.question.text}
         options={state.question.options}
@@ -121,19 +121,26 @@ export function WaitingRoom({
         finished={state.status === "FINISHED"}
       />
     );
+  } else {
+    content = (
+      <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4">
+        <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+          <p className="mb-1 text-sm text-zinc-500">{quizTitle}</p>
+          <p className="mb-4 text-lg font-medium text-zinc-900">
+            {nickname}님, 대기실에 입장했습니다
+          </p>
+          <p className="text-sm text-zinc-500">
+            진행자가 퀴즈를 시작할 때까지 기다려주세요.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
-        <p className="mb-1 text-sm text-zinc-500">{quizTitle}</p>
-        <p className="mb-4 text-lg font-medium text-zinc-900">
-          {nickname}님, 대기실에 입장했습니다
-        </p>
-        <p className="text-sm text-zinc-500">
-          진행자가 퀴즈를 시작할 때까지 기다려주세요.
-        </p>
-      </div>
+    <div className="flex flex-1 flex-col pb-20">
+      {content}
+      <ReactionBar joinCode={joinCode} />
     </div>
   );
 }
