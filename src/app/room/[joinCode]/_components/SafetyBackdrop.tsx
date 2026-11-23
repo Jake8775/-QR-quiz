@@ -20,7 +20,7 @@ export function SafetyBackdrop() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-0 overflow-hidden opacity-[0.12] select-none"
+      className="pointer-events-none absolute inset-0 overflow-hidden opacity-20 select-none"
     >
       <div className="grid grid-cols-3 gap-4 p-4 sm:grid-cols-5">
         {TILES.map((t, i) => (

@@ -1,5 +1,7 @@
 "use client";
 
+import { SafetyBackdrop } from "./SafetyBackdrop";
+
 type LeaderboardRow = {
   participantId: string;
   nickname: string;
@@ -28,8 +30,9 @@ export function ResultView({
   finished: boolean;
 }) {
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-4 py-8">
-      <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+    <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-50 px-4 py-8">
+      <SafetyBackdrop />
+      <div className="relative w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
         {!finished && (
           <>
             <h1 className="mb-3 text-lg font-semibold text-zinc-900">

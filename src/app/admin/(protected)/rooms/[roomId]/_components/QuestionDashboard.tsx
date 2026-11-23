@@ -55,8 +55,16 @@ export function QuestionDashboard({
   const timeUp = remaining !== null && remaining <= 0;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-4 lg:flex-row lg:items-center lg:justify-center">
-      <div className="flex flex-1 flex-col items-center text-center">
+    <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 lg:grid-cols-[1fr_minmax(0,56rem)_1fr]">
+      {/* Empty spacer -- same flex share (1fr) as the timer column on the
+          right, so the middle (question) column lands at the true visual
+          center of the screen regardless of the timer's own width. Without
+          this, the timer sitting only on one side pulls the question text
+          off-center, most noticeably when the presenter window is wide
+          (fullscreen). */}
+      <div aria-hidden className="hidden lg:block" />
+
+      <div className="flex flex-col items-center text-center">
         <p className="text-lg text-zinc-500 sm:text-xl">
           문제 {currentQuestionIndex + 1} / {totalQuestions}
         </p>
@@ -93,7 +101,7 @@ export function QuestionDashboard({
       </div>
 
       {remaining !== null && (
-        <div className="flex flex-row items-center gap-4 lg:flex-col">
+        <div className="flex flex-row items-center justify-center gap-4 lg:flex-col lg:justify-self-end">
           <p
             className="font-bold tabular-nums text-4xl sm:text-6xl"
             style={{ color }}
