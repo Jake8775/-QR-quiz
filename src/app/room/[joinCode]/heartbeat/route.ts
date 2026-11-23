@@ -4,6 +4,11 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const PARTICIPANT_COOKIE = "qz_participant";
 
+// Lives under /room/[joinCode]/heartbeat (not /api/room/...) so this
+// request path falls within the qz_participant cookie's `path:
+// /room/{joinCode}` scope -- a route outside that path prefix never
+// receives the cookie at all, which is what caused a silent 401 when this
+// previously lived under /api/room/[joinCode]/heartbeat.
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ joinCode: string }> },

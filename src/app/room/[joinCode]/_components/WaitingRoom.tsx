@@ -13,7 +13,7 @@ export function WaitingRoom({
 }) {
   useEffect(() => {
     function ping() {
-      fetch(`/api/room/${joinCode}/heartbeat`, { method: "POST" }).catch(
+      fetch(`/room/${joinCode}/heartbeat`, { method: "POST" }).catch(
         () => {
           // Transient network error -- next heartbeat tick will retry.
         },
