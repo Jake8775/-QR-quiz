@@ -12,17 +12,32 @@ export function WaitingRoom({
   nickname: string;
 }) {
   useEffect(() => {
-    function ping() {
-      fetch(`/room/${joinCode}/heartbeat`, { method: "POST" }).catch(
-        () => {
-          // Transient network error -- next heartbeat tick will retry.
-        },
-      );
+    let cancelled = false;
+
+    async function ping(isRetry = false) {
+      try {
+        const res = await fetch(`/room/${joinCode}/heartbeat`, {
+          method: "POST",
+        });
+        // The very first ping can race the cookie set by joinRoomAction's
+        // redirect-free router.refresh() in production (observed as a
+        // one-off 401 that a retry a moment later always resolves). Retry
+        // once after a short delay rather than silently waiting a full
+        // 15s for the next interval tick.
+        if (res.status === 401 && !isRetry && !cancelled) {
+          setTimeout(() => ping(true), 1000);
+        }
+      } catch {
+        // Transient network error -- next heartbeat tick will retry.
+      }
     }
 
     ping();
-    const interval = setInterval(ping, 15000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => ping(), 15000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [joinCode]);
 
   return (
