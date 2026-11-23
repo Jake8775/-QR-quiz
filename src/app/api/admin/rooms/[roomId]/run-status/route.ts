@@ -110,6 +110,7 @@ export async function GET(
           text: o.option_text,
         })),
         closesAt: state?.closes_at ?? null,
+        timeLimitSeconds: currentQuestion.time_limit_seconds,
       },
       submittedCount: submittedCount ?? 0,
     });

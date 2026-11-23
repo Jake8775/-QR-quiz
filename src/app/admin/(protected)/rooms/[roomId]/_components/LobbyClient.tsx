@@ -27,6 +27,7 @@ type RunStatusResponse = {
     text: string;
     options: { id: string; text: string }[];
     closesAt?: string | null;
+    timeLimitSeconds?: number | null;
     correctOptionId?: string | null;
   };
   submittedCount?: number;
@@ -169,8 +170,11 @@ export function LobbyClient({
           <p className="mb-4 text-sm text-red-600">{actionError}</p>
         )}
         <QuestionDashboard
+          key={data.question.id}
           questionText={data.question.text}
           options={data.question.options}
+          closesAt={data.question.closesAt ?? null}
+          timeLimitSeconds={data.question.timeLimitSeconds ?? null}
           submittedCount={data.submittedCount ?? 0}
           totalParticipants={data.count}
           currentQuestionIndex={data.currentQuestionIndex}
