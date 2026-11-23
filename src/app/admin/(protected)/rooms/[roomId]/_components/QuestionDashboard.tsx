@@ -60,14 +60,18 @@ export function QuestionDashboard({
         <p className="text-lg text-zinc-500 sm:text-xl">
           문제 {currentQuestionIndex + 1} / {totalQuestions}
         </p>
-        <h2 className="mt-2 mb-10 text-4xl font-semibold text-zinc-900 sm:text-6xl">
+        <h2
+          className="mt-2 mb-10 font-semibold text-zinc-900"
+          style={{ fontSize: "clamp(2.25rem, 5vw, 4.75rem)" }}
+        >
           {questionText}
         </h2>
         <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
           {options.map((o) => (
             <div
               key={o.id}
-              className="rounded-xl border border-zinc-200 px-8 py-6 text-2xl text-zinc-900 sm:text-3xl"
+              className="rounded-xl border border-zinc-200 px-8 py-6 text-zinc-900"
+              style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.5rem)" }}
             >
               {o.text}
             </div>

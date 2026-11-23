@@ -50,7 +50,8 @@ export function NicknameForm({
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
             placeholder="닉네임"
-            maxLength={20}
+            minLength={2}
+            maxLength={15}
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500"
           />
           <button

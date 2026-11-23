@@ -3,8 +3,8 @@ import { z } from "zod";
 export const nicknameSchema = z
   .string()
   .trim()
-  .min(1, "닉네임을 입력해주세요")
-  .max(20, "닉네임은 20자 이하로 입력해주세요");
+  .min(2, "닉네임은 2자 이상으로 입력해주세요")
+  .max(15, "닉네임은 15자 이하로 입력해주세요");
 
 export const joinRoomSchema = z.object({
   nickname: nicknameSchema,
