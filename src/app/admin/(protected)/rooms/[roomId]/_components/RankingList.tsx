@@ -4,6 +4,8 @@ type LeaderboardRow = {
   participantId: string;
   nickname: string;
   totalPoints: number;
+  correctCount: number;
+  answeredQuestions: number;
 };
 
 const MEDALS = ["🥇", "🥈", "🥉"];
@@ -42,12 +44,21 @@ export function RankingList({ leaderboard }: { leaderboard: LeaderboardRow[] }) 
             >
               {row.nickname}
             </span>
-            <span
-              className={`font-bold ${
-                isMedal ? "text-4xl sm:text-5xl" : "text-2xl sm:text-3xl"
-              }`}
-            >
-              {row.totalPoints}점
+            <span className="flex items-baseline gap-2">
+              <span
+                className={`font-bold ${
+                  isMedal ? "text-4xl sm:text-5xl" : "text-2xl sm:text-3xl"
+                }`}
+              >
+                {row.totalPoints}점
+              </span>
+              <span
+                className={`text-zinc-400 ${
+                  isMedal ? "text-lg sm:text-xl" : "text-sm sm:text-base"
+                }`}
+              >
+                ({row.correctCount}/{row.answeredQuestions}문제 정답)
+              </span>
             </span>
           </div>
         );

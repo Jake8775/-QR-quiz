@@ -14,6 +14,8 @@ type LeaderboardRow = {
   participantId: string;
   nickname: string;
   totalPoints: number;
+  correctCount: number;
+  answeredQuestions: number;
 };
 
 type RunStatusResponse = {

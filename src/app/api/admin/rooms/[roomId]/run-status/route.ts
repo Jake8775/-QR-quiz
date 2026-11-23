@@ -158,13 +158,25 @@ async function buildLeaderboard(
     .eq("run_id", runId);
   const { data: answers } = await supabase
     .from("answers")
-    .select("participant_id, awarded_points")
+    .select("participant_id, awarded_points, is_correct")
     .eq("run_id", runId);
+  const { count: answeredQuestions } = await supabase
+    .from("run_question_states")
+    .select("id", { count: "exact", head: true })
+    .eq("run_id", runId)
+    .not("closed_at", "is", null);
 
   const totals = new Map<string, number>();
-  for (const p of participants ?? []) totals.set(p.id, 0);
+  const correctCounts = new Map<string, number>();
+  for (const p of participants ?? []) {
+    totals.set(p.id, 0);
+    correctCounts.set(p.id, 0);
+  }
   for (const a of answers ?? []) {
     totals.set(a.participant_id, (totals.get(a.participant_id) ?? 0) + a.awarded_points);
+    if (a.is_correct) {
+      correctCounts.set(a.participant_id, (correctCounts.get(a.participant_id) ?? 0) + 1);
+    }
   }
 
   return (participants ?? [])
@@ -172,6 +184,8 @@ async function buildLeaderboard(
       participantId: p.id,
       nickname: p.nickname,
       totalPoints: totals.get(p.id) ?? 0,
+      correctCount: correctCounts.get(p.id) ?? 0,
+      answeredQuestions: answeredQuestions ?? 0,
     }))
     .sort((a, b) => b.totalPoints - a.totalPoints);
 }
