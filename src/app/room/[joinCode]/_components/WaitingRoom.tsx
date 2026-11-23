@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { QuestionView } from "./QuestionView";
 import { ResultView } from "./ResultView";
 import { ReactionBar } from "./ReactionBar";
-import { SafetyBackdrop } from "./SafetyBackdrop";
+import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
 

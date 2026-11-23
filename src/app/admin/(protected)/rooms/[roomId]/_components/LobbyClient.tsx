@@ -6,6 +6,7 @@ import { QuestionDashboard } from "./QuestionDashboard";
 import { LeaderboardDashboard } from "./LeaderboardDashboard";
 import { RankingList } from "./RankingList";
 import { ReactionOverlay } from "./ReactionOverlay";
+import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 type Participant = { id: string; nickname: string; online: boolean };
 type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
@@ -132,7 +133,7 @@ export function LobbyClient({
                   {data.participants.map((p) => (
                     <div
                       key={p.id}
-                      className="flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-3 text-lg"
+                      className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 py-3 text-lg"
                     >
                       <span
                         className={`h-3 w-3 shrink-0 rounded-full ${
@@ -218,9 +219,10 @@ export function LobbyClient({
   }
 
   return (
-    <>
-      {content}
+    <div className="relative min-h-screen overflow-hidden">
+      <SafetyBackdrop />
+      <div className="relative">{content}</div>
       <ReactionOverlay roomId={roomId} />
-    </>
+    </div>
   );
 }

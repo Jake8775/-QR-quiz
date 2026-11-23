@@ -1,6 +1,6 @@
 "use client";
 
-import { SafetyBackdrop } from "./SafetyBackdrop";
+import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 type LeaderboardRow = {
   participantId: string;

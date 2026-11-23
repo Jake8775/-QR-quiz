@@ -78,7 +78,7 @@ export function QuestionDashboard({
           {options.map((o) => (
             <div
               key={o.id}
-              className="rounded-xl border border-zinc-200 px-8 py-6 text-zinc-900"
+              className="rounded-xl border border-zinc-200 bg-white px-8 py-6 text-zinc-900"
               style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.5rem)" }}
             >
               {o.text}

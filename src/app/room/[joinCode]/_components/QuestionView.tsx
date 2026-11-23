@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SafetyBackdrop } from "./SafetyBackdrop";
+import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 function computeRemaining(closesAt: string): number {
   return Math.max(0, Math.ceil((new Date(closesAt).getTime() - Date.now()) / 1000));
