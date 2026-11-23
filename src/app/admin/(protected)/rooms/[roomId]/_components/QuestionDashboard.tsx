@@ -3,7 +3,6 @@
 export function QuestionDashboard({
   questionText,
   options,
-  closesAt,
   submittedCount,
   totalParticipants,
   currentQuestionIndex,
@@ -13,7 +12,6 @@ export function QuestionDashboard({
 }: {
   questionText: string;
   options: { id: string; text: string }[];
-  closesAt: string | null;
   submittedCount: number;
   totalParticipants: number;
   currentQuestionIndex: number;
@@ -42,11 +40,6 @@ export function QuestionDashboard({
 
       <p className="mt-8 text-lg text-zinc-500 sm:text-xl">
         제출 {submittedCount} / {totalParticipants}
-        {closesAt && (
-          <span className="ml-3 text-zinc-400">
-            마감 {new Date(closesAt).toLocaleTimeString()}
-          </span>
-        )}
       </p>
 
       <button

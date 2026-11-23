@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { JoinQr } from "./JoinQr";
 import { QuestionDashboard } from "./QuestionDashboard";
 import { LeaderboardDashboard } from "./LeaderboardDashboard";
@@ -46,6 +46,7 @@ export function LobbyClient({
   const [data, setData] = useState<RunStatusResponse | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const pollRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     let cancelled = false;
@@ -60,9 +61,10 @@ export function LobbyClient({
         // Transient network error — next poll tick will retry.
       }
     }
+    pollRef.current = poll;
 
     poll();
-    const interval = setInterval(poll, 3000);
+    const interval = setInterval(poll, 1000);
     return () => {
       cancelled = true;
       clearInterval(interval);
@@ -79,7 +81,12 @@ export function LobbyClient({
       const json = await res.json();
       if (!res.ok) {
         setActionError(json.error ?? "요청에 실패했습니다");
+        return;
       }
+      // Reflect the new state immediately instead of waiting up to 3s for
+      // the next poll tick -- otherwise a click can look like it did
+      // nothing until the following poll (or click) catches up.
+      await pollRef.current();
     } catch {
       setActionError("네트워크 오류가 발생했습니다");
     } finally {
@@ -164,7 +171,6 @@ export function LobbyClient({
         <QuestionDashboard
           questionText={data.question.text}
           options={data.question.options}
-          closesAt={data.question.closesAt ?? null}
           submittedCount={data.submittedCount ?? 0}
           totalParticipants={data.count}
           currentQuestionIndex={data.currentQuestionIndex}
