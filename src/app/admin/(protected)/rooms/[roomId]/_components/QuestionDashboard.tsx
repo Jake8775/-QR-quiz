@@ -64,7 +64,7 @@ export function QuestionDashboard({
   const maxCount = Math.max(1, submittedCount);
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl items-start gap-8 px-4 pt-8 lg:grid-cols-[1fr_minmax(0,56rem)_1fr]">
+    <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 lg:grid-cols-[1fr_minmax(0,56rem)_1fr]">
       {/* Empty spacer -- same flex share (1fr) as the timer column on the
           right, so the middle (question) column lands at the true visual
           center of the screen regardless of the timer's own width. Without

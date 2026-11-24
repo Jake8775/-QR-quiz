@@ -176,7 +176,7 @@ export function LobbyClient({
     data.question
   ) {
     content = (
-      <div className="flex min-h-screen flex-col items-center justify-start">
+      <div className="flex min-h-screen flex-col items-center justify-center">
         {actionError && (
           <p className="mb-4 w-full text-center text-sm text-red-600">
             {actionError}
