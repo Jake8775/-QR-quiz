@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { NicknameForm } from "./_components/NicknameForm";
 import { WaitingRoom } from "./_components/WaitingRoom";
 import { GroupJoinFlow } from "./_components/GroupJoinFlow";
+import { GroupWorkspace } from "./_components/GroupWorkspace";
 
 const PARTICIPANT_COOKIE = "qz_participant";
 
@@ -41,18 +42,25 @@ export default async function RoomPage({
     // joinCode and cross-check, never trust the cookie value alone.
     const { data: participant } = await admin
       .from("participants")
-      .select("nickname, group_id")
+      .select("nickname, group_id, groups(status)")
       .eq("participant_session_id", sessionId)
       .eq("run_id", room.active_run_id)
       .maybeSingle();
 
     if (participant) {
-      // Group mode inserts one extra step between nickname join and the
-      // waiting room: pick a group + enter its PIN. Normal mode never
-      // has group_id set (it stays permanently null), so this branch is
-      // unreachable for every normal-mode participant.
+      // Group mode inserts two extra steps between nickname join and the
+      // waiting room: pick a group + enter its PIN, then write questions
+      // in the group workspace until the group is submitted/confirmed.
+      // Normal mode never has group_id set (it stays permanently null),
+      // so both branches are unreachable for every normal-mode participant.
       if (isGroupMode && !participant.group_id) {
         return <GroupJoinFlow joinCode={joinCode} quizTitle={quizTitle} />;
+      }
+      const group = Array.isArray(participant.groups)
+        ? participant.groups[0]
+        : participant.groups;
+      if (isGroupMode && group?.status === "DRAFTING") {
+        return <GroupWorkspace joinCode={joinCode} />;
       }
       return (
         <WaitingRoom

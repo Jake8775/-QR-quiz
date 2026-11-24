@@ -1,5 +1,11 @@
 import { test, expect, type Page } from "@playwright/test";
 
+// This dev environment sees variable request latency under load
+// (observed 300ms-1.5s per request, occasionally more right after a
+// server restart) -- a generous shared timeout keeps the suite from
+// flaking on slow-but-correct responses rather than genuine failures.
+const ASSERT_TIMEOUT = 15_000;
+
 // Credentials for the normal-mode regression suite's presenter account.
 // Must belong to an existing Supabase Auth user with at least presenter
 // access in this environment.
@@ -24,7 +30,10 @@ test.describe("normal mode core flow (regression)", () => {
     // --- 1. Presenter login ---
     await login(presenter);
 
-    // --- 2. Create a 1-question quiz (10s time limit, 2 options) ---
+    // --- 2. Create a 1-question quiz (30s time limit, 2 options) ---
+    // A generous limit absorbs this environment's variable request
+    // latency (observed 300ms-1.5s per request under load) without the
+    // "slow responder" step below racing the deadline.
     await presenter.goto("/admin/quizzes/new");
     await presenter.fill('input[placeholder="퀴즈 제목"]', quizTitle);
     const card = presenter
@@ -33,7 +42,7 @@ test.describe("normal mode core flow (regression)", () => {
     await card
       .locator('input[placeholder="질문을 입력하세요"]')
       .fill("회귀테스트 문제");
-    await card.locator('input[type="number"]').fill("10");
+    await card.locator('input[type="number"]').fill("30");
     const optionInputs = card.locator('input[placeholder="보기 내용"]');
     await optionInputs.nth(0).fill("정답");
     await optionInputs.nth(1).fill("오답");
@@ -69,6 +78,10 @@ test.describe("normal mode core flow (regression)", () => {
     const startBtn = presenter.getByRole("button", { name: "퀴즈 시작" });
     await expect(startBtn).toBeEnabled();
     await startBtn.click();
+    // Wait for the run to actually flip to QUESTION_OPEN server-side
+    // before probing the late-join rejection -- otherwise a late joiner
+    // can race the start request and land in LOBBY legitimately.
+    await expect(presenter.getByText(/문제 1 \/ 1/)).toBeVisible({ timeout: ASSERT_TIMEOUT });
 
     // --- 6. Participant joining after start is rejected ---
     const latePage = await (await browser.newContext()).newPage();
@@ -77,27 +90,35 @@ test.describe("normal mode core flow (regression)", () => {
     await latePage.click('button:has-text("참여하기")');
     await expect(
       latePage.getByText("이미 시작된 퀴즈에는 새로 입장할 수 없습니다"),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: ASSERT_TIMEOUT });
     await latePage.close();
 
     // --- 7. p1 answers fast (correct), p2 answers slowly (correct) ---
     await p1.waitForTimeout(500);
     await p1.getByRole("button", { name: "정답", exact: true }).click();
     await p1.getByRole("button", { name: "제출하기" }).click();
+    await expect(p1.getByText("제출 완료")).toBeVisible({ timeout: ASSERT_TIMEOUT });
 
     await p2.waitForTimeout(6000);
     await p2.getByRole("button", { name: "정답", exact: true }).click();
     await p2.getByRole("button", { name: "제출하기" }).click();
+    await expect(p2.getByText("제출 완료")).toBeVisible({ timeout: ASSERT_TIMEOUT });
 
     // --- 8. Presenter reveals (QUESTION_OPEN -> REVEALED): bar chart with counts ---
-    await presenter.waitForTimeout(1000);
-    await presenter.getByRole("button", { name: "결과 보기" }).click();
-    await expect(presenter.getByText(/정답자 2 \/ 2명/)).toBeVisible();
+    // Wait for the presenter's own 1s poll to catch up to both
+    // submissions before revealing, rather than a fixed sleep.
+    await expect(presenter.getByText(/제출 2 \/ 2/)).toBeVisible({ timeout: ASSERT_TIMEOUT });
+    const revealBtn = presenter.getByRole("button", { name: "결과 보기" });
+    // disabled briefly while a prior action's request is in flight --
+    // wait for it to become clickable rather than racing a stale state.
+    await expect(revealBtn).toBeEnabled({ timeout: ASSERT_TIMEOUT });
+    await revealBtn.click();
+    await expect(presenter.getByText(/정답자 2 \/ 2명/)).toBeVisible({ timeout: ASSERT_TIMEOUT });
 
     // --- 9. Both participants already see their own result at reveal time ---
     await p1.waitForTimeout(1000);
-    await expect(p1.getByText(/정답! \+\d+점/)).toBeVisible();
-    await expect(p2.getByText(/정답! \+\d+점/)).toBeVisible();
+    await expect(p1.getByText(/정답! \+\d+점/)).toBeVisible({ timeout: ASSERT_TIMEOUT });
+    await expect(p2.getByText(/정답! \+\d+점/)).toBeVisible({ timeout: ASSERT_TIMEOUT });
 
     // --- 10. Score check: faster response scores higher than slower one ---
     const p1ScoreText = await p1.getByText(/정답! \+\d+점/).textContent();
@@ -114,7 +135,9 @@ test.describe("normal mode core flow (regression)", () => {
 
     // --- 12. Finish the quiz (single question -> FINISHED) ---
     await presenter.getByRole("button", { name: "퀴즈 종료" }).click();
-    await expect(presenter.getByText("퀴즈가 종료되었습니다")).toBeVisible();
+    await expect(presenter.getByText("퀴즈가 종료되었습니다")).toBeVisible({
+      timeout: ASSERT_TIMEOUT,
+    });
 
     await p1.close();
     await p2.close();
@@ -161,10 +184,14 @@ test.describe("normal mode core flow (regression)", () => {
     // Let the 5s deadline pass without submitting.
     await presenter.waitForTimeout(6500);
     await presenter.getByRole("button", { name: "결과 보기" }).click();
-    await expect(presenter.getByText(/정답자 0 \/ 1명/)).toBeVisible();
+    await expect(presenter.getByText(/정답자 0 \/ 1명/)).toBeVisible({
+      timeout: ASSERT_TIMEOUT,
+    });
 
     await p1.waitForTimeout(1000);
-    await expect(p1.getByText("오답 또는 미제출")).toBeVisible();
+    await expect(p1.getByText("오답 또는 미제출")).toBeVisible({
+      timeout: ASSERT_TIMEOUT,
+    });
 
     await p1.close();
     await presenter.close();

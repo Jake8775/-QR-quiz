@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isSlotComplete } from "@/lib/groupMode/slotDraft";
 
 const ONLINE_THRESHOLD_MS = 30_000;
 
@@ -154,23 +155,4 @@ export async function GET(
     groups: groupPayload,
     allConfirmed,
   });
-}
-
-function isSlotComplete(slot: {
-  question_text: string;
-  options: unknown;
-  correct_option_temp_id: string | null;
-}): boolean {
-  if (!slot.question_text.trim()) return false;
-  if (!slot.correct_option_temp_id) return false;
-  const options = Array.isArray(slot.options) ? slot.options : [];
-  if (options.length < 2) return false;
-  const hasEmptyOption = options.some(
-    (o) => !o || typeof o !== "object" || !("optionText" in o) || !String(o.optionText).trim(),
-  );
-  if (hasEmptyOption) return false;
-  const correctExists = options.some(
-    (o) => o && typeof o === "object" && "tempId" in o && o.tempId === slot.correct_option_temp_id,
-  );
-  return correctExists;
 }

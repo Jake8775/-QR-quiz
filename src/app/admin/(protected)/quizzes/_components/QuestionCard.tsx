@@ -11,6 +11,8 @@ export function QuestionCard({
   onDelete,
   onMoveUp,
   onMoveDown,
+  hideTimeLimit = false,
+  hideReorderControls = false,
 }: {
   question: QuestionDraft;
   index: number;
@@ -19,6 +21,12 @@ export function QuestionCard({
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
+  // Group-mode slot editing reuses this component but has no concept of
+  // per-question time limit (it's set once at the run level) or of
+  // adding/removing/reordering slots (fixed at K, created once). Both
+  // default to false so normal mode's render is byte-identical.
+  hideTimeLimit?: boolean;
+  hideReorderControls?: boolean;
 }) {
   function addOption() {
     if (question.options.length >= 6) return;
@@ -58,31 +66,33 @@ export function QuestionCard({
         <span className="text-sm font-medium text-zinc-500">
           문제 {index + 1}
         </span>
-        <div className="flex gap-1">
-          <button
-            type="button"
-            onClick={onMoveUp}
-            disabled={index === 0}
-            className="px-2 py-1 text-sm text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
-          >
-            ▲
-          </button>
-          <button
-            type="button"
-            onClick={onMoveDown}
-            disabled={index === total - 1}
-            className="px-2 py-1 text-sm text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
-          >
-            ▼
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="px-2 py-1 text-sm text-zinc-500 hover:text-red-600"
-          >
-            문제 삭제
-          </button>
-        </div>
+        {!hideReorderControls && (
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={onMoveUp}
+              disabled={index === 0}
+              className="px-2 py-1 text-sm text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={onMoveDown}
+              disabled={index === total - 1}
+              className="px-2 py-1 text-sm text-zinc-500 hover:text-zinc-900 disabled:opacity-30"
+            >
+              ▼
+            </button>
+            <button
+              type="button"
+              onClick={onDelete}
+              className="px-2 py-1 text-sm text-zinc-500 hover:text-red-600"
+            >
+              문제 삭제
+            </button>
+          </div>
+        )}
       </div>
 
       <input
@@ -95,22 +105,24 @@ export function QuestionCard({
         className="mb-3 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500"
       />
 
-      <div className="mb-3 flex items-center gap-2">
-        <label className="text-sm text-zinc-500">제한 시간(초)</label>
-        <input
-          type="number"
-          min={5}
-          max={300}
-          value={question.timeLimitSeconds}
-          onChange={(e) =>
-            onChange({
-              ...question,
-              timeLimitSeconds: Number(e.target.value),
-            })
-          }
-          className="w-20 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
-        />
-      </div>
+      {!hideTimeLimit && (
+        <div className="mb-3 flex items-center gap-2">
+          <label className="text-sm text-zinc-500">제한 시간(초)</label>
+          <input
+            type="number"
+            min={5}
+            max={300}
+            value={question.timeLimitSeconds}
+            onChange={(e) =>
+              onChange({
+                ...question,
+                timeLimitSeconds: Number(e.target.value),
+              })
+            }
+            className="w-20 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-2">
         {question.options.map((o) => (
