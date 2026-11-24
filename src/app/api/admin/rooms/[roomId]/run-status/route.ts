@@ -21,12 +21,14 @@ export async function GET(
   // manual ownership check here.
   const { data: room } = await supabase
     .from("rooms")
-    .select("id, active_run_id")
+    .select("id, active_run_id, quizzes(mode)")
     .eq("id", roomId)
     .maybeSingle();
   if (!room || !room.active_run_id) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
+  const quiz = Array.isArray(room.quizzes) ? room.quizzes[0] : room.quizzes;
+  const mode = quiz?.mode ?? "NORMAL";
 
   const { data: run } = await supabase
     .from("quiz_runs")
@@ -57,6 +59,7 @@ export async function GET(
 
   const base = {
     status: run.status,
+    mode,
     currentQuestionIndex: run.current_question_index,
     totalQuestions: totalQuestions ?? 0,
     participants: participantsWithStatus,

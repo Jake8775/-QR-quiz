@@ -6,6 +6,7 @@ import { QuestionDashboard } from "./QuestionDashboard";
 import { LeaderboardDashboard } from "./LeaderboardDashboard";
 import { RankingList } from "./RankingList";
 import { ReactionOverlay } from "./ReactionOverlay";
+import { GroupModeLobbyDashboard } from "./GroupModeLobbyDashboard";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 type Participant = { id: string; nickname: string; online: boolean };
@@ -26,6 +27,7 @@ type LeaderboardRow = {
 
 type RunStatusResponse = {
   status: RunStatus;
+  mode?: "NORMAL" | "GROUP";
   currentQuestionIndex: number;
   totalQuestions: number;
   participants: Participant[];
@@ -43,6 +45,32 @@ type RunStatusResponse = {
   leaderboard?: LeaderboardRow[];
 };
 
+type GroupData = {
+  id: string;
+  name: string;
+  pin: string;
+  status: "DRAFTING" | "SUBMITTED" | "CONFIRMED";
+  statusVersion: number;
+  rejectionComment: string | null;
+  members: { id: string; nickname: string; online: boolean }[];
+  slots: {
+    id: string;
+    slotIndex: number;
+    questionText: string;
+    complete: boolean;
+    lockedBy: string | null;
+    presenterComment: string | null;
+  }[];
+  completeCount: number;
+  totalSlots: number;
+  lastActivityAt: string | null;
+};
+
+type GroupsResponse = {
+  groups: GroupData[];
+  allConfirmed: boolean;
+};
+
 export function LobbyClient({
   roomId,
   joinUrl,
@@ -53,9 +81,11 @@ export function LobbyClient({
   quizTitle: string;
 }) {
   const [data, setData] = useState<RunStatusResponse | null>(null);
+  const [groupsData, setGroupsData] = useState<GroupsResponse | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const pollRef = useRef<() => Promise<void>>(async () => {});
+  const pollGroupsRef = useRef<() => Promise<void>>(async () => {});
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +109,35 @@ export function LobbyClient({
       clearInterval(interval);
     };
   }, [roomId]);
+
+  // Separate poll for group-mode's own dashboard data -- only runs while
+  // the run is still LOBBY (group review happens before the game
+  // starts), and only once run-status has told us this room is GROUP
+  // mode. For normal mode data?.mode is always "NORMAL", so this never
+  // fires at all on that path.
+  useEffect(() => {
+    if (data?.mode !== "GROUP" || data.status !== "LOBBY") return;
+    let cancelled = false;
+
+    async function poll() {
+      try {
+        const res = await fetch(`/api/admin/rooms/${roomId}/groups`);
+        if (!res.ok) return;
+        const json = (await res.json()) as GroupsResponse;
+        if (!cancelled) setGroupsData(json);
+      } catch {
+        // Transient network error — next poll tick will retry.
+      }
+    }
+    pollGroupsRef.current = poll;
+
+    poll();
+    const interval = setInterval(poll, 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [roomId, data?.mode, data?.status]);
 
   async function callAction(path: string) {
     setSubmitting(true);
@@ -109,6 +168,33 @@ export function LobbyClient({
     content = (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-sm text-zinc-400">불러오는 중...</p>
+      </div>
+    );
+  } else if (data.status === "LOBBY" && data.mode === "GROUP") {
+    content = (
+      <div className="flex min-h-screen flex-col px-6 py-8">
+        {actionError && (
+          <p className="mb-4 text-center text-sm text-red-600">{actionError}</p>
+        )}
+
+        <div className="mx-auto mb-6 flex flex-col items-center gap-2">
+          <p className="text-lg text-zinc-500">{quizTitle}</p>
+          <JoinQr joinUrl={joinUrl} />
+        </div>
+
+        {!groupsData ? (
+          <p className="text-center text-sm text-zinc-400">불러오는 중...</p>
+        ) : (
+          <GroupModeLobbyDashboard
+            roomId={roomId}
+            groups={groupsData.groups}
+            allConfirmed={groupsData.allConfirmed}
+            onChanged={() => pollGroupsRef.current()}
+            onStart={() => callAction("start")}
+            startDisabled={!groupsData.allConfirmed}
+            startSubmitting={submitting}
+          />
+        )}
       </div>
     );
   } else if (data.status === "LOBBY") {

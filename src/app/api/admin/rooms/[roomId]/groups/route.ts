@@ -55,6 +55,18 @@ export async function GET(
 
   const groupIds = groups.map((g) => g.id);
 
+  const { data: histories } = await supabase
+    .from("group_status_history")
+    .select("group_id, comment, to_status, created_at")
+    .in("group_id", groupIds.length > 0 ? groupIds : [""])
+    .order("created_at", { ascending: false });
+  const latestHistoryByGroupId = new Map<string, { comment: string | null; to_status: string }>();
+  for (const h of histories ?? []) {
+    if (!latestHistoryByGroupId.has(h.group_id)) {
+      latestHistoryByGroupId.set(h.group_id, { comment: h.comment, to_status: h.to_status });
+    }
+  }
+
   // groups has an owner_select RLS policy so the RLS-scoped client above
   // is already allowed to read group_question_slots-adjacent summary
   // data, but group_question_slots itself has zero RLS policies (same
@@ -66,7 +78,9 @@ export async function GET(
 
   const { data: slots } = await admin
     .from("group_question_slots")
-    .select("id, group_id, slot_index, question_text, options, correct_option_temp_id, last_edited_at")
+    .select(
+      "id, group_id, slot_index, question_text, options, correct_option_temp_id, presenter_comment, presenter_edited, last_edited_at",
+    )
     .in("group_id", groupIds.length > 0 ? groupIds : [""]);
 
   const { data: locks } = await admin
@@ -114,6 +128,11 @@ export async function GET(
       .map((s) => ({
         id: s.id,
         slotIndex: s.slot_index,
+        questionText: s.question_text,
+        options: s.options,
+        correctOptionTempId: s.correct_option_temp_id,
+        presenterComment: s.presenter_comment,
+        presenterEdited: s.presenter_edited,
         complete: isSlotComplete(s),
         lastEditedAt: s.last_edited_at,
         lockedBy: liveLockBySlotId.get(s.id) ?? null,
@@ -125,12 +144,17 @@ export async function GET(
       return latest;
     }, null);
 
+    const latestHistory = latestHistoryByGroupId.get(g.id);
     return {
       id: g.id,
       name: g.name,
       pin: g.pin,
       status: g.status,
       statusVersion: g.status_version,
+      rejectionComment:
+        g.status === "DRAFTING" && latestHistory?.to_status === "DRAFTING"
+          ? latestHistory.comment
+          : null,
       members: groupMembers,
       slots: groupSlots,
       completeCount,
