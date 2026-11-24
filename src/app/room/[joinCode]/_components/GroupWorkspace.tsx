@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 import { isSlotComplete } from "@/lib/groupMode/slotDraft";
 import { SlotEditorWrapper, type SlotData } from "./SlotEditorWrapper";
@@ -19,15 +20,28 @@ const STATUS_LABEL: Record<WorkspaceResponse["group"]["status"], string> = {
 };
 
 export function GroupWorkspace({ joinCode }: { joinCode: string }) {
+  const router = useRouter();
   const [data, setData] = useState<WorkspaceResponse | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const leavingRef = useRef(false);
 
   async function poll() {
+    if (leavingRef.current) return;
     try {
       const res = await fetch(`/room/${joinCode}/group/workspace`);
       if (!res.ok) return;
       const json = await res.json();
+      // Once the presenter starts the game, the run leaves LOBBY -- this
+      // screen (the group-authoring workspace) has nothing left to show,
+      // so hand off to page.tsx's server-side routing (which renders
+      // WaitingRoom once the run is no longer LOBBY) by refreshing
+      // rather than tracking run progression here itself.
+      if (json.runStatus && json.runStatus !== "LOBBY") {
+        leavingRef.current = true;
+        router.refresh();
+        return;
+      }
       setData(json);
     } catch {
       // Transient network error -- next poll tick will retry.

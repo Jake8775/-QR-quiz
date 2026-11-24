@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
+import { AuthoringGroupBanner } from "./AuthoringGroupBanner";
 
 function computeRemaining(closesAt: string): number {
   return Math.max(0, Math.ceil((new Date(closesAt).getTime() - Date.now()) / 1000));
@@ -14,6 +15,7 @@ export function QuestionView({
   closesAt,
   hasSubmitted,
   runQuestionId,
+  authoringGroup,
 }: {
   joinCode: string;
   questionText: string;
@@ -21,6 +23,8 @@ export function QuestionView({
   closesAt: string | null;
   hasSubmitted: boolean;
   runQuestionId: string;
+  // Group mode only -- undefined for every normal-mode render.
+  authoringGroup?: { name: string; members: string[] };
 }) {
   const [selectedOptionId, setSelectedOptionId] = useState<string | null>(
     null,
@@ -85,6 +89,7 @@ export function QuestionView({
     <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-50 px-4">
       <SafetyBackdrop />
       <div className="relative w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <AuthoringGroupBanner authoringGroup={authoringGroup} />
         {remaining !== null && (
           <p className="mb-2 text-center text-sm text-zinc-500">
             남은 시간 {remaining}초

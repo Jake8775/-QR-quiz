@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { openQuestion } from "@/lib/runEngine/openQuestion";
+import { startGroupModeRun } from "@/lib/groupMode/startRun";
 
 export async function POST(
   _request: Request,
@@ -17,7 +19,7 @@ export async function POST(
   // rooms, so a non-owner's request simply yields no rows.
   const { data: room } = await supabase
     .from("rooms")
-    .select("id, active_run_id")
+    .select("id, active_run_id, quizzes(mode)")
     .eq("id", roomId)
     .maybeSingle();
   if (!room || !room.active_run_id) {
@@ -39,6 +41,15 @@ export async function POST(
     );
   }
 
+  const quiz = Array.isArray(room.quizzes) ? room.quizzes[0] : room.quizzes;
+  if (quiz?.mode === "GROUP") {
+    const result = await startGroupModeRun(supabase, run.id);
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   const { data: firstQuestion } = await supabase
     .from("run_questions")
     .select("id, time_limit_seconds")
@@ -57,38 +68,15 @@ export async function POST(
   // actual state transition must go through the service-role client --
   // ownership was already proven by the RLS reads above.
   const admin = createAdminClient();
-  const now = new Date();
-  const closesAt = new Date(
-    now.getTime() + firstQuestion.time_limit_seconds * 1000,
-  );
-
-  const { error: stateError } = await admin.from("run_question_states").insert({
-    run_id: run.id,
-    run_question_id: firstQuestion.id,
-    opened_at: now.toISOString(),
-    closes_at: closesAt.toISOString(),
+  const openError = await openQuestion(admin, {
+    runId: run.id,
+    runQuestionId: firstQuestion.id,
+    timeLimitSeconds: firstQuestion.time_limit_seconds,
+    currentQuestionIndex: 0,
+    stateVersion: run.state_version,
   });
-  if (stateError) {
-    return NextResponse.json(
-      { error: "문제 시작에 실패했습니다" },
-      { status: 500 },
-    );
-  }
-
-  const { error: runError } = await admin
-    .from("quiz_runs")
-    .update({
-      status: "QUESTION_OPEN",
-      current_question_index: 0,
-      started_at: now.toISOString(),
-      state_version: run.state_version + 1,
-    })
-    .eq("id", run.id);
-  if (runError) {
-    return NextResponse.json(
-      { error: "퀴즈 시작에 실패했습니다" },
-      { status: 500 },
-    );
+  if (openError) {
+    return NextResponse.json({ error: openError.error }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

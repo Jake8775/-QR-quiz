@@ -27,6 +27,7 @@ export function QuestionDashboard({
   onReveal,
   onShowRanking,
   submitting,
+  authoringGroup,
 }: {
   questionText: string;
   options: { id: string; text: string; count?: number }[];
@@ -42,6 +43,8 @@ export function QuestionDashboard({
   onReveal: () => void;
   onShowRanking: () => void;
   submitting: boolean;
+  // Group mode only -- undefined for every normal-mode render.
+  authoringGroup?: { name: string; members: string[] };
 }) {
   const [remaining, setRemaining] = useState<number | null>(() =>
     closesAt ? computeRemaining(closesAt) : null,
@@ -77,6 +80,11 @@ export function QuestionDashboard({
         <p className="text-lg text-zinc-500 sm:text-xl">
           문제 {currentQuestionIndex + 1} / {totalQuestions}
         </p>
+        {authoringGroup && (
+          <p className="text-sm text-zinc-400">
+            출제: {authoringGroup.name} - {authoringGroup.members.join(", ")}
+          </p>
+        )}
         <h2
           className="mt-2 mb-10 font-semibold text-zinc-900"
           style={{ fontSize: "clamp(2.25rem, 5vw, 4.75rem)" }}

@@ -1,5 +1,17 @@
 import type { QuestionDraft } from "@/lib/validation/quiz";
 
+export type MemberSnapshotEntry = { participantId: string; nickname: string };
+
+// groups.member_snapshot comes back untyped from the Supabase client
+// (this codebase's clients aren't instantiated with the Database
+// generic), so `?? []` alone can infer `never[]` under strict mode --
+// this helper gives every call site one explicit, correct shape.
+export function memberNicknames(
+  snapshot: MemberSnapshotEntry[] | null | undefined,
+): string[] {
+  return (snapshot ?? []).map((m) => m.nickname);
+}
+
 // A group_question_slots row has no time limit (that's set once, run-wide,
 // in group_mode_settings) and no slot-reordering concept, but its content
 // shape (question text + options + correct answer) is otherwise identical

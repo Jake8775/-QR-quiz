@@ -17,6 +17,7 @@ export function LeaderboardDashboard({
   isLastQuestion,
   onNext,
   submitting,
+  nextAuthoringGroup,
 }: {
   correctCount: number;
   totalParticipants: number;
@@ -24,6 +25,8 @@ export function LeaderboardDashboard({
   isLastQuestion: boolean;
   onNext: () => void;
   submitting: boolean;
+  // Group mode only -- undefined for every normal-mode render.
+  nextAuthoringGroup?: { name: string; members: string[] };
 }) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center">
@@ -33,6 +36,12 @@ export function LeaderboardDashboard({
       <h2 className="mt-2 mb-6 text-3xl font-semibold text-zinc-900 sm:text-4xl">
         이번 라운드 순위
       </h2>
+      {nextAuthoringGroup && (
+        <p className="mb-4 text-sm text-zinc-400">
+          다음: {nextAuthoringGroup.name} 출제 -{" "}
+          {nextAuthoringGroup.members.join(", ")}
+        </p>
+      )}
 
       <RankingList leaderboard={leaderboard} />
 

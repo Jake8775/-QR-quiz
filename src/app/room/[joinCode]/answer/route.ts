@@ -55,7 +55,7 @@ export async function POST(
   // run it's being checked against -- never trust it alone.
   const { data: participant } = await admin
     .from("participants")
-    .select("id")
+    .select("id, group_id")
     .eq("participant_session_id", sessionId)
     .eq("run_id", run.id)
     .maybeSingle();
@@ -72,7 +72,7 @@ export async function POST(
 
   const { data: currentQuestion } = await admin
     .from("run_questions")
-    .select("id, time_limit_seconds")
+    .select("id, time_limit_seconds, source_group_id")
     .eq("run_id", run.id)
     .eq("order_index", run.current_question_index)
     .maybeSingle();
@@ -80,6 +80,16 @@ export async function POST(
     return NextResponse.json(
       { error: "이미 지난 문제입니다" },
       { status: 409 },
+    );
+  }
+
+  // Group mode spectator gate: a participant never answers their own
+  // group's question (R2/8-4). source_group_id is null for every
+  // normal-mode run_questions row, so this is a complete no-op there.
+  if (currentQuestion.source_group_id && currentQuestion.source_group_id === participant.group_id) {
+    return NextResponse.json(
+      { error: "자신의 조가 출제한 문제에는 응답할 수 없습니다" },
+      { status: 403 },
     );
   }
 

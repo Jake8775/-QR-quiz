@@ -43,6 +43,9 @@ type RunStatusResponse = {
   submittedCount?: number;
   correctCount?: number;
   leaderboard?: LeaderboardRow[];
+  // Group mode only -- undefined for every normal-mode response.
+  authoringGroup?: { name: string; members: string[] };
+  nextAuthoringGroup?: { name: string; members: string[] };
 };
 
 type GroupData = {
@@ -284,6 +287,7 @@ export function LobbyClient({
           onReveal={() => callAction("reveal")}
           onShowRanking={() => callAction("show-ranking")}
           submitting={submitting}
+          authoringGroup={data.authoringGroup}
         />
       </div>
     );
@@ -302,6 +306,7 @@ export function LobbyClient({
           }
           onNext={() => callAction("next")}
           submitting={submitting}
+          nextAuthoringGroup={data.nextAuthoringGroup}
         />
       </div>
     );

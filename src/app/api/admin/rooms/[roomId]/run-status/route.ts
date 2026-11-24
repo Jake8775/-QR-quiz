@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { memberNicknames } from "@/lib/groupMode/slotDraft";
 
 const ONLINE_THRESHOLD_MS = 30_000;
 
@@ -76,12 +77,30 @@ export async function GET(
 
   const { data: currentQuestion } = await supabase
     .from("run_questions")
-    .select("id, question_text, time_limit_seconds")
+    .select("id, question_text, time_limit_seconds, source_group_id")
     .eq("run_id", run.id)
     .eq("order_index", run.current_question_index)
     .maybeSingle();
   if (!currentQuestion) {
     return NextResponse.json(base);
+  }
+
+  // Group mode: every progression screen always shows who authored the
+  // current question (8-3). source_group_id is null for every
+  // normal-mode row, so this stays undefined there.
+  let authoringGroup: { name: string; members: string[] } | undefined;
+  if (currentQuestion.source_group_id) {
+    const { data: authorGroup } = await supabase
+      .from("groups")
+      .select("name, member_snapshot")
+      .eq("id", currentQuestion.source_group_id)
+      .maybeSingle();
+    if (authorGroup) {
+      authoringGroup = {
+        name: authorGroup.name,
+        members: memberNicknames(authorGroup.member_snapshot),
+      };
+    }
   }
 
   const { data: options } = await supabase
@@ -116,6 +135,7 @@ export async function GET(
         timeLimitSeconds: currentQuestion.time_limit_seconds,
       },
       submittedCount: submittedCount ?? 0,
+      authoringGroup,
     });
   }
 
@@ -155,10 +175,39 @@ export async function GET(
       },
       correctCount,
       submittedCount: submittedCount ?? 0,
+      authoringGroup,
     });
   }
 
   const leaderboard = await buildLeaderboard(supabase, run.id);
+
+  // D3: on a group's LAST question's result screen, announce which
+  // group is up next -- this is the only point where "next group" can
+  // be shown without touching quiz_runs.status or run timing, since the
+  // next run_questions row's source_group_id is already knowable here by
+  // just reading ahead one order_index.
+  let nextAuthoringGroup: { name: string; members: string[] } | undefined;
+  if (currentQuestion.source_group_id) {
+    const { data: nextQuestion } = await supabase
+      .from("run_questions")
+      .select("source_group_id")
+      .eq("run_id", run.id)
+      .eq("order_index", run.current_question_index + 1)
+      .maybeSingle();
+    if (nextQuestion && nextQuestion.source_group_id !== currentQuestion.source_group_id) {
+      const { data: nextGroup } = await supabase
+        .from("groups")
+        .select("name, member_snapshot")
+        .eq("id", nextQuestion.source_group_id)
+        .maybeSingle();
+      if (nextGroup) {
+        nextAuthoringGroup = {
+          name: nextGroup.name,
+          members: memberNicknames(nextGroup.member_snapshot),
+        };
+      }
+    }
+  }
 
   return NextResponse.json({
     ...base,
@@ -171,6 +220,8 @@ export async function GET(
     correctCount,
     submittedCount: submittedCount ?? 0,
     leaderboard,
+    authoringGroup,
+    nextAuthoringGroup,
   });
 }
 

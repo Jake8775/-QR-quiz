@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { memberNicknames } from "@/lib/groupMode/slotDraft";
 
 const PARTICIPANT_COOKIE = "qz_participant";
 
@@ -41,7 +42,7 @@ export async function GET(
   // run it's being checked against -- never trust it alone.
   const { data: participant } = await admin
     .from("participants")
-    .select("id")
+    .select("id, group_id")
     .eq("participant_session_id", sessionId)
     .eq("run_id", run.id)
     .maybeSingle();
@@ -55,12 +56,35 @@ export async function GET(
 
   const { data: currentQuestion } = await admin
     .from("run_questions")
-    .select("id, question_text, time_limit_seconds")
+    .select("id, question_text, time_limit_seconds, source_group_id")
     .eq("run_id", run.id)
     .eq("order_index", run.current_question_index)
     .maybeSingle();
   if (!currentQuestion) {
     return NextResponse.json({ status: run.status });
+  }
+
+  // Group mode: a participant is a spectator on their own group's
+  // question (R2/8-4), and every progression screen always shows who
+  // authored the current question (8-3). source_group_id is null for
+  // every normal-mode row, so both are undefined there.
+  const spectator = Boolean(
+    currentQuestion.source_group_id &&
+      currentQuestion.source_group_id === participant.group_id,
+  );
+  let authoringGroup: { name: string; members: string[] } | undefined;
+  if (currentQuestion.source_group_id) {
+    const { data: authorGroup } = await admin
+      .from("groups")
+      .select("name, member_snapshot")
+      .eq("id", currentQuestion.source_group_id)
+      .maybeSingle();
+    if (authorGroup) {
+      authoringGroup = {
+        name: authorGroup.name,
+        members: memberNicknames(authorGroup.member_snapshot),
+      };
+    }
   }
 
   const { data: options } = await admin
@@ -93,6 +117,8 @@ export async function GET(
         closesAt: state?.closes_at ?? null,
       },
       hasSubmitted: !!myAnswer,
+      spectator,
+      authoringGroup,
     });
   }
 
@@ -108,6 +134,33 @@ export async function GET(
   const myRank = leaderboard.findIndex(
     (row) => row.participantId === participant.id,
   );
+
+  // D3: on a group's LAST question's result screen, announce which
+  // group is up next (same lookahead as the presenter's run-status
+  // route) -- undefined when there's no next question, or the next one
+  // shares this question's author group.
+  let nextAuthoringGroup: { name: string; members: string[] } | undefined;
+  if (currentQuestion.source_group_id) {
+    const { data: nextQuestion } = await admin
+      .from("run_questions")
+      .select("source_group_id")
+      .eq("run_id", run.id)
+      .eq("order_index", run.current_question_index + 1)
+      .maybeSingle();
+    if (nextQuestion && nextQuestion.source_group_id !== currentQuestion.source_group_id) {
+      const { data: nextGroup } = await admin
+        .from("groups")
+        .select("name, member_snapshot")
+        .eq("id", nextQuestion.source_group_id)
+        .maybeSingle();
+      if (nextGroup) {
+        nextAuthoringGroup = {
+          name: nextGroup.name,
+          members: memberNicknames(nextGroup.member_snapshot),
+        };
+      }
+    }
+  }
 
   return NextResponse.json({
     status: run.status,
@@ -126,6 +179,9 @@ export async function GET(
       : null,
     leaderboard,
     myRank: myRank === -1 ? null : myRank + 1,
+    spectator,
+    authoringGroup,
+    nextAuthoringGroup,
   });
 }
 

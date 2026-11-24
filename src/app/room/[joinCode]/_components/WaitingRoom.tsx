@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { QuestionView } from "./QuestionView";
 import { ResultView } from "./ResultView";
 import { ReactionBar } from "./ReactionBar";
+import { SpectatorView } from "./SpectatorView";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 type RunStatus =
@@ -18,6 +19,8 @@ type LeaderboardRow = {
   nickname: string;
   totalPoints: number;
 };
+
+type AuthoringGroup = { name: string; members: string[] };
 
 type StateResponse = {
   status: RunStatus;
@@ -36,6 +39,10 @@ type StateResponse = {
   } | null;
   leaderboard?: LeaderboardRow[];
   myRank?: number | null;
+  // Group mode only -- both undefined for every normal-mode response.
+  spectator?: boolean;
+  authoringGroup?: AuthoringGroup;
+  nextAuthoringGroup?: AuthoringGroup;
 };
 
 export function WaitingRoom({
@@ -100,7 +107,17 @@ export function WaitingRoom({
   }, [joinCode]);
 
   let content;
-  if (state?.status === "QUESTION_OPEN" && state.question) {
+  if (state?.status === "QUESTION_OPEN" && state.question && state.spectator) {
+    content = (
+      <SpectatorView
+        key={state.question.id}
+        questionText={state.question.text}
+        options={state.question.options}
+        closesAt={state.question.closesAt ?? null}
+        authoringGroup={state.authoringGroup}
+      />
+    );
+  } else if (state?.status === "QUESTION_OPEN" && state.question) {
     content = (
       <QuestionView
         key={state.question.id}
@@ -110,6 +127,7 @@ export function WaitingRoom({
         closesAt={state.question.closesAt ?? null}
         hasSubmitted={state.hasSubmitted ?? false}
         runQuestionId={state.question.id}
+        authoringGroup={state.authoringGroup}
       />
     );
   } else if (
@@ -127,6 +145,8 @@ export function WaitingRoom({
         leaderboard={state.leaderboard ?? []}
         myRank={state.myRank ?? null}
         finished={state.status === "FINISHED"}
+        authoringGroup={state.authoringGroup}
+        nextAuthoringGroup={state.nextAuthoringGroup}
       />
     );
   } else {

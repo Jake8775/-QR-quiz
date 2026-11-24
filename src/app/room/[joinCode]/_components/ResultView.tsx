@@ -1,6 +1,7 @@
 "use client";
 
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
+import { AuthoringGroupBanner } from "./AuthoringGroupBanner";
 
 type LeaderboardRow = {
   participantId: string;
@@ -16,6 +17,8 @@ export function ResultView({
   leaderboard,
   myRank,
   finished,
+  authoringGroup,
+  nextAuthoringGroup,
 }: {
   questionText: string;
   options: { id: string; text: string }[];
@@ -28,6 +31,9 @@ export function ResultView({
   leaderboard: LeaderboardRow[];
   myRank: number | null;
   finished: boolean;
+  // Group mode only -- undefined for every normal-mode render.
+  authoringGroup?: { name: string; members: string[] };
+  nextAuthoringGroup?: { name: string; members: string[] };
 }) {
   return (
     <div className="relative flex flex-1 items-center justify-center overflow-hidden bg-zinc-50 px-4 py-8">
@@ -35,6 +41,7 @@ export function ResultView({
       <div className="relative w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
         {!finished && (
           <>
+            <AuthoringGroupBanner authoringGroup={authoringGroup} />
             <h1 className="mb-3 text-lg font-semibold text-zinc-900">
               {questionText}
             </h1>
@@ -62,6 +69,13 @@ export function ResultView({
                 <span className="text-zinc-500">오답 또는 미제출</span>
               )}
             </p>
+
+            {nextAuthoringGroup && (
+              <p className="mt-2 text-center text-sm text-zinc-400">
+                다음: {nextAuthoringGroup.name} 출제 -{" "}
+                {nextAuthoringGroup.members.join(", ")}
+              </p>
+            )}
           </>
         )}
 
