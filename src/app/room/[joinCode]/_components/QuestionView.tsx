@@ -99,9 +99,9 @@ export function QuestionView({
               key={o.id}
               type="button"
               onClick={() => setSelectedOptionId(o.id)}
-              className={`rounded-md border px-3 py-2 text-left text-sm font-medium ${
+              className={`rounded-md border-2 px-3 py-2 text-left text-sm font-medium transition-colors ${
                 selectedOptionId === o.id
-                  ? "border-zinc-900 bg-zinc-200 text-zinc-900"
+                  ? "border-blue-500 bg-blue-50 text-blue-900"
                   : "border-zinc-300 bg-white text-zinc-700"
               }`}
             >
