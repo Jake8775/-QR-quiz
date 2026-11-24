@@ -5,6 +5,9 @@ export type QuizRunStatus =
   | "LEADERBOARD"
   | "FINISHED";
 
+export type QuizMode = "NORMAL" | "GROUP";
+export type GroupStatus = "DRAFTING" | "SUBMITTED" | "CONFIRMED";
+
 export interface Database {
   public: {
     Tables: {
@@ -13,6 +16,7 @@ export interface Database {
           id: string;
           owner_id: string;
           title: string;
+          mode: QuizMode;
           created_at: string;
           updated_at: string;
         };
@@ -20,6 +24,7 @@ export interface Database {
           id?: string;
           owner_id: string;
           title: string;
+          mode?: QuizMode;
           created_at?: string;
           updated_at?: string;
         };
@@ -27,6 +32,7 @@ export interface Database {
           id?: string;
           owner_id?: string;
           title?: string;
+          mode?: QuizMode;
           created_at?: string;
           updated_at?: string;
         };
@@ -157,6 +163,7 @@ export interface Database {
           id: string;
           run_id: string;
           source_question_id: string | null;
+          source_group_id: string | null;
           order_index: number;
           question_text: string;
           time_limit_seconds: number;
@@ -165,6 +172,7 @@ export interface Database {
           id?: string;
           run_id: string;
           source_question_id?: string | null;
+          source_group_id?: string | null;
           order_index: number;
           question_text: string;
           time_limit_seconds: number;
@@ -173,6 +181,7 @@ export interface Database {
           id?: string;
           run_id?: string;
           source_question_id?: string | null;
+          source_group_id?: string | null;
           order_index?: number;
           question_text?: string;
           time_limit_seconds?: number;
@@ -248,6 +257,9 @@ export interface Database {
           last_seen_at: string;
           participant_session_id: string;
           last_reaction_at: string | null;
+          group_id: string | null;
+          pin_attempt_count: number;
+          pin_locked_until: string | null;
         };
         Insert: {
           id?: string;
@@ -257,6 +269,9 @@ export interface Database {
           last_seen_at?: string;
           participant_session_id?: string;
           last_reaction_at?: string | null;
+          group_id?: string | null;
+          pin_attempt_count?: number;
+          pin_locked_until?: string | null;
         };
         Update: {
           id?: string;
@@ -266,6 +281,9 @@ export interface Database {
           last_seen_at?: string;
           participant_session_id?: string;
           last_reaction_at?: string | null;
+          group_id?: string | null;
+          pin_attempt_count?: number;
+          pin_locked_until?: string | null;
         };
       };
       reactions: {
@@ -324,6 +342,197 @@ export interface Database {
           submitted_at?: string;
           is_correct?: boolean;
           awarded_points?: number;
+        };
+      };
+      // Group mode -- see the project plan for design rationale.
+      groups: {
+        Row: {
+          id: string;
+          run_id: string;
+          name: string;
+          pin: string;
+          status: GroupStatus;
+          status_version: number;
+          member_snapshot: { participantId: string; nickname: string }[] | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          run_id: string;
+          name: string;
+          pin: string;
+          status?: GroupStatus;
+          status_version?: number;
+          member_snapshot?: { participantId: string; nickname: string }[] | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          run_id?: string;
+          name?: string;
+          pin?: string;
+          status?: GroupStatus;
+          status_version?: number;
+          member_snapshot?: { participantId: string; nickname: string }[] | null;
+          created_at?: string;
+        };
+      };
+      // Server-only: zero RLS policies, same posture as question_answer_keys
+      // -- before game start, no participant-facing path may expose
+      // another group's question content.
+      group_question_slots: {
+        Row: {
+          id: string;
+          group_id: string;
+          slot_index: number;
+          question_text: string;
+          options: { tempId: string; optionText: string }[];
+          correct_option_temp_id: string | null;
+          last_edited_by_participant_id: string | null;
+          last_edited_at: string | null;
+          presenter_comment: string | null;
+          presenter_edited: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          slot_index: number;
+          question_text?: string;
+          options?: { tempId: string; optionText: string }[];
+          correct_option_temp_id?: string | null;
+          last_edited_by_participant_id?: string | null;
+          last_edited_at?: string | null;
+          presenter_comment?: string | null;
+          presenter_edited?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          slot_index?: number;
+          question_text?: string;
+          options?: { tempId: string; optionText: string }[];
+          correct_option_temp_id?: string | null;
+          last_edited_by_participant_id?: string | null;
+          last_edited_at?: string | null;
+          presenter_comment?: string | null;
+          presenter_edited?: boolean;
+          updated_at?: string;
+        };
+      };
+      // Server-only, same posture as group_question_slots above.
+      group_question_locks: {
+        Row: {
+          id: string;
+          slot_id: string;
+          holder_participant_id: string;
+          acquired_at: string;
+          heartbeat_at: string;
+          expires_at: string;
+          lock_version: number;
+        };
+        Insert: {
+          id?: string;
+          slot_id: string;
+          holder_participant_id: string;
+          acquired_at?: string;
+          heartbeat_at?: string;
+          expires_at: string;
+          lock_version?: number;
+        };
+        Update: {
+          id?: string;
+          slot_id?: string;
+          holder_participant_id?: string;
+          acquired_at?: string;
+          heartbeat_at?: string;
+          expires_at?: string;
+          lock_version?: number;
+        };
+      };
+      group_mode_settings: {
+        Row: {
+          run_id: string;
+          topic: string;
+          questions_per_group: number;
+          time_limit_seconds: number;
+          group_count: number;
+        };
+        Insert: {
+          run_id: string;
+          topic: string;
+          questions_per_group: number;
+          time_limit_seconds: number;
+          group_count: number;
+        };
+        Update: {
+          run_id?: string;
+          topic?: string;
+          questions_per_group?: number;
+          time_limit_seconds?: number;
+          group_count?: number;
+        };
+      };
+      group_status_history: {
+        Row: {
+          id: string;
+          group_id: string;
+          actor: "MEMBER" | "PRESENTER";
+          actor_participant_id: string | null;
+          from_status: string;
+          to_status: string;
+          comment: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          actor: "MEMBER" | "PRESENTER";
+          actor_participant_id?: string | null;
+          from_status: string;
+          to_status: string;
+          comment?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          actor?: "MEMBER" | "PRESENTER";
+          actor_participant_id?: string | null;
+          from_status?: string;
+          to_status?: string;
+          comment?: string | null;
+          created_at?: string;
+        };
+      };
+      group_slot_edit_events: {
+        Row: {
+          id: string;
+          slot_id: string;
+          edited_by: "MEMBER" | "PRESENTER";
+          editor_participant_id: string | null;
+          before_snapshot: { questionText: string; options: { tempId: string; optionText: string }[]; correctOptionTempId: string };
+          after_snapshot: { questionText: string; options: { tempId: string; optionText: string }[]; correctOptionTempId: string };
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          slot_id: string;
+          edited_by: "MEMBER" | "PRESENTER";
+          editor_participant_id?: string | null;
+          before_snapshot: { questionText: string; options: { tempId: string; optionText: string }[]; correctOptionTempId: string };
+          after_snapshot: { questionText: string; options: { tempId: string; optionText: string }[]; correctOptionTempId: string };
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          slot_id?: string;
+          edited_by?: "MEMBER" | "PRESENTER";
+          editor_participant_id?: string | null;
+          before_snapshot?: { questionText: string; options: { tempId: string; optionText: string }[]; correctOptionTempId: string };
+          after_snapshot?: { questionText: string; options: { tempId: string; optionText: string }[]; correctOptionTempId: string };
+          created_at?: string;
         };
       };
     };
