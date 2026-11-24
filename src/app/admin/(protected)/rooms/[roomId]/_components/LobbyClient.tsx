@@ -69,9 +69,12 @@ type GroupData = {
     id: string;
     slotIndex: number;
     questionText: string;
+    options: { tempId: string; optionText: string }[];
+    correctOptionTempId: string | null;
     complete: boolean;
     lockedBy: string | null;
     presenterComment: string | null;
+    presenterEdited: boolean;
   }[];
   completeCount: number;
   totalSlots: number;
