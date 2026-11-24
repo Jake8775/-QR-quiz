@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NicknameForm } from "./_components/NicknameForm";
 import { WaitingRoom } from "./_components/WaitingRoom";
+import { GroupJoinFlow } from "./_components/GroupJoinFlow";
 
 const PARTICIPANT_COOKIE = "qz_participant";
 
@@ -15,7 +16,7 @@ export default async function RoomPage({
 
   const { data: room } = await admin
     .from("rooms")
-    .select("active_run_id, quizzes(title)")
+    .select("active_run_id, quizzes(title, mode)")
     .eq("public_join_code", joinCode)
     .maybeSingle();
 
@@ -29,6 +30,7 @@ export default async function RoomPage({
 
   const quiz = Array.isArray(room.quizzes) ? room.quizzes[0] : room.quizzes;
   const quizTitle = quiz?.title ?? "";
+  const isGroupMode = quiz?.mode === "GROUP";
 
   const cookieStore = await cookies();
   const sessionId = cookieStore.get(PARTICIPANT_COOKIE)?.value;
@@ -39,12 +41,19 @@ export default async function RoomPage({
     // joinCode and cross-check, never trust the cookie value alone.
     const { data: participant } = await admin
       .from("participants")
-      .select("nickname")
+      .select("nickname, group_id")
       .eq("participant_session_id", sessionId)
       .eq("run_id", room.active_run_id)
       .maybeSingle();
 
     if (participant) {
+      // Group mode inserts one extra step between nickname join and the
+      // waiting room: pick a group + enter its PIN. Normal mode never
+      // has group_id set (it stays permanently null), so this branch is
+      // unreachable for every normal-mode participant.
+      if (isGroupMode && !participant.group_id) {
+        return <GroupJoinFlow joinCode={joinCode} quizTitle={quizTitle} />;
+      }
       return (
         <WaitingRoom
           joinCode={joinCode}
