@@ -1,6 +1,7 @@
 "use client";
 
 import { RankingList } from "./RankingList";
+import { GroupRankingList } from "./GroupRankingList";
 
 type LeaderboardRow = {
   participantId: string;
@@ -8,6 +9,13 @@ type LeaderboardRow = {
   totalPoints: number;
   correctCount: number;
   answeredQuestions: number;
+};
+
+type GroupScoreRow = {
+  groupId: string;
+  name: string;
+  averageScore: number;
+  members: { nickname: string; totalPoints: number }[];
 };
 
 export function LeaderboardDashboard({
@@ -18,6 +26,7 @@ export function LeaderboardDashboard({
   onNext,
   submitting,
   nextAuthoringGroup,
+  groupScores,
 }: {
   correctCount: number;
   totalParticipants: number;
@@ -27,6 +36,7 @@ export function LeaderboardDashboard({
   submitting: boolean;
   // Group mode only -- undefined for every normal-mode render.
   nextAuthoringGroup?: { name: string; members: string[] };
+  groupScores?: GroupScoreRow[];
 }) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center">
@@ -43,7 +53,24 @@ export function LeaderboardDashboard({
         </p>
       )}
 
-      <RankingList leaderboard={leaderboard} />
+      <div
+        className={`w-full ${
+          groupScores ? "grid grid-cols-1 gap-8 text-left lg:grid-cols-2" : ""
+        }`}
+      >
+        <div className="flex flex-col gap-2">
+          {groupScores && (
+            <h3 className="text-center text-base font-medium text-zinc-700">개인 순위</h3>
+          )}
+          <RankingList leaderboard={leaderboard} />
+        </div>
+        {groupScores && (
+          <div className="flex flex-col gap-2">
+            <h3 className="text-center text-base font-medium text-zinc-700">조 순위</h3>
+            <GroupRankingList groups={groupScores} />
+          </div>
+        )}
+      </div>
 
       <button
         type="button"

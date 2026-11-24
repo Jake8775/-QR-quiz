@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { memberNicknames } from "@/lib/groupMode/slotDraft";
+import { buildGroupAwareLeaderboard, buildGroupScores } from "@/lib/groupMode/leaderboard";
 
 const ONLINE_THRESHOLD_MS = 30_000;
 
@@ -69,8 +70,12 @@ export async function GET(
 
   if (run.status === "LOBBY" || run.status === "FINISHED") {
     if (run.status === "FINISHED") {
-      const leaderboard = await buildLeaderboard(supabase, run.id);
-      return NextResponse.json({ ...base, leaderboard });
+      const leaderboard =
+        mode === "GROUP"
+          ? await buildGroupAwareLeaderboard(supabase, run.id)
+          : await buildLeaderboard(supabase, run.id);
+      const groupScores = mode === "GROUP" ? await buildGroupScores(supabase, run.id) : undefined;
+      return NextResponse.json({ ...base, leaderboard, groupScores });
     }
     return NextResponse.json(base);
   }
@@ -179,7 +184,11 @@ export async function GET(
     });
   }
 
-  const leaderboard = await buildLeaderboard(supabase, run.id);
+  const leaderboard =
+    mode === "GROUP"
+      ? await buildGroupAwareLeaderboard(supabase, run.id)
+      : await buildLeaderboard(supabase, run.id);
+  const groupScores = mode === "GROUP" ? await buildGroupScores(supabase, run.id) : undefined;
 
   // D3: on a group's LAST question's result screen, announce which
   // group is up next -- this is the only point where "next group" can
@@ -220,6 +229,7 @@ export async function GET(
     correctCount,
     submittedCount: submittedCount ?? 0,
     leaderboard,
+    groupScores,
     authoringGroup,
     nextAuthoringGroup,
   });

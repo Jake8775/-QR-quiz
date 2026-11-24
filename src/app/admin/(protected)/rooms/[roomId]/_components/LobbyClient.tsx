@@ -7,6 +7,7 @@ import { LeaderboardDashboard } from "./LeaderboardDashboard";
 import { RankingList } from "./RankingList";
 import { ReactionOverlay } from "./ReactionOverlay";
 import { GroupModeLobbyDashboard } from "./GroupModeLobbyDashboard";
+import { GroupRankingList } from "./GroupRankingList";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 type Participant = { id: string; nickname: string; online: boolean };
@@ -46,6 +47,14 @@ type RunStatusResponse = {
   // Group mode only -- undefined for every normal-mode response.
   authoringGroup?: { name: string; members: string[] };
   nextAuthoringGroup?: { name: string; members: string[] };
+  groupScores?: GroupScoreRow[];
+};
+
+type GroupScoreRow = {
+  groupId: string;
+  name: string;
+  averageScore: number;
+  members: { nickname: string; totalPoints: number }[];
 };
 
 type GroupData = {
@@ -307,6 +316,7 @@ export function LobbyClient({
           onNext={() => callAction("next")}
           submitting={submitting}
           nextAuthoringGroup={data.nextAuthoringGroup}
+          groupScores={data.groupScores}
         />
       </div>
     );
@@ -316,8 +326,23 @@ export function LobbyClient({
         <h2 className="mb-6 text-3xl font-semibold text-zinc-900 sm:text-4xl">
           퀴즈가 종료되었습니다
         </h2>
-        <div className="w-full max-w-2xl">
-          <RankingList leaderboard={data.leaderboard ?? []} />
+        <div
+          className={`w-full ${
+            data.groupScores ? "grid max-w-5xl grid-cols-1 gap-8 lg:grid-cols-2" : "max-w-2xl"
+          }`}
+        >
+          <div className="flex flex-col gap-2">
+            {data.groupScores && (
+              <h3 className="text-center text-lg font-medium text-zinc-700">개인 순위</h3>
+            )}
+            <RankingList leaderboard={data.leaderboard ?? []} />
+          </div>
+          {data.groupScores && (
+            <div className="flex flex-col gap-2">
+              <h3 className="text-center text-lg font-medium text-zinc-700">조 순위</h3>
+              <GroupRankingList groups={data.groupScores} />
+            </div>
+          )}
         </div>
       </div>
     );
