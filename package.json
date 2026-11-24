@@ -6,7 +6,8 @@
     "dev": "cross-env NODE_EXTRA_CA_CERTS=.certs/hmg-root-ca.pem next dev",
     "build": "cross-env NODE_EXTRA_CA_CERTS=.certs/hmg-root-ca.pem next build",
     "start": "cross-env NODE_EXTRA_CA_CERTS=.certs/hmg-root-ca.pem next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -19,6 +20,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
     "@types/react": "^19",
