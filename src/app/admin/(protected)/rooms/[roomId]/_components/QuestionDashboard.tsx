@@ -19,20 +19,28 @@ export function QuestionDashboard({
   timeLimitSeconds,
   submittedCount,
   totalParticipants,
+  correctCount,
   currentQuestionIndex,
   totalQuestions,
+  revealed,
+  correctOptionId,
   onReveal,
+  onShowRanking,
   submitting,
 }: {
   questionText: string;
-  options: { id: string; text: string }[];
+  options: { id: string; text: string; count?: number }[];
   closesAt: string | null;
   timeLimitSeconds: number | null;
   submittedCount: number;
   totalParticipants: number;
+  correctCount?: number;
   currentQuestionIndex: number;
   totalQuestions: number;
+  revealed: boolean;
+  correctOptionId?: string | null;
   onReveal: () => void;
+  onShowRanking: () => void;
   submitting: boolean;
 }) {
   const [remaining, setRemaining] = useState<number | null>(() =>
@@ -53,9 +61,10 @@ export function QuestionDashboard({
       : 1;
   const color = gaugeColor(ratio);
   const timeUp = remaining !== null && remaining <= 0;
+  const maxCount = Math.max(1, submittedCount);
 
   return (
-    <div className="mx-auto grid w-full max-w-7xl items-center gap-8 px-4 lg:grid-cols-[1fr_minmax(0,56rem)_1fr]">
+    <div className="mx-auto grid w-full max-w-7xl items-start gap-8 px-4 pt-8 lg:grid-cols-[1fr_minmax(0,56rem)_1fr]">
       {/* Empty spacer -- same flex share (1fr) as the timer column on the
           right, so the middle (question) column lands at the true visual
           center of the screen regardless of the timer's own width. Without
@@ -74,33 +83,90 @@ export function QuestionDashboard({
         >
           {questionText}
         </h2>
-        <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
-          {options.map((o) => (
-            <div
-              key={o.id}
-              className="rounded-xl border border-zinc-200 bg-white px-8 py-6 text-zinc-900"
-              style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.5rem)" }}
+
+        {!revealed ? (
+          <div className="grid w-full grid-cols-1 gap-5 sm:grid-cols-2">
+            {options.map((o) => (
+              <div
+                key={o.id}
+                className="rounded-xl border border-zinc-200 bg-white px-8 py-6 text-zinc-900"
+                style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.5rem)" }}
+              >
+                {o.text}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex w-full flex-col gap-4">
+            {options.map((o) => {
+              const count = o.count ?? 0;
+              const isCorrect = o.id === correctOptionId;
+              return (
+                <div key={o.id} className="text-left">
+                  <div className="mb-1 flex items-baseline justify-between gap-3">
+                    <span
+                      className={`font-medium ${
+                        isCorrect ? "text-green-700" : "text-zinc-700"
+                      }`}
+                      style={{ fontSize: "clamp(1.1rem, 1.8vw, 1.5rem)" }}
+                    >
+                      {o.text}
+                      {isCorrect && " ✓"}
+                    </span>
+                    <span
+                      className={`font-semibold ${
+                        isCorrect ? "text-green-700" : "text-zinc-500"
+                      }`}
+                    >
+                      {count}명
+                    </span>
+                  </div>
+                  <div className="h-6 w-full overflow-hidden rounded-full bg-zinc-100">
+                    <div
+                      className={`h-full rounded-full transition-[width] duration-500 ease-out ${
+                        isCorrect ? "bg-green-500" : "bg-blue-400"
+                      }`}
+                      style={{ width: `${(count / maxCount) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!revealed ? (
+          <>
+            <p className="mt-8 text-lg text-zinc-500 sm:text-xl">
+              제출 {submittedCount} / {totalParticipants}
+            </p>
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={onReveal}
+              className="mt-6 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white disabled:opacity-50"
             >
-              {o.text}
-            </div>
-          ))}
-        </div>
-
-        <p className="mt-8 text-lg text-zinc-500 sm:text-xl">
-          제출 {submittedCount} / {totalParticipants}
-        </p>
-
-        <button
-          type="button"
-          disabled={submitting}
-          onClick={onReveal}
-          className="mt-6 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white disabled:opacity-50"
-        >
-          결과 보기
-        </button>
+              결과 보기
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="mt-8 text-lg text-zinc-500 sm:text-xl">
+              정답자 {correctCount ?? 0} / {totalParticipants}명
+            </p>
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={onShowRanking}
+              className="mt-6 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white disabled:opacity-50"
+            >
+              순위 보기
+            </button>
+          </>
+        )}
       </div>
 
-      {remaining !== null && (
+      {!revealed && remaining !== null ? (
         <div className="flex flex-row items-center justify-center gap-4 lg:flex-col lg:justify-self-end">
           <p
             className="font-bold tabular-nums text-4xl sm:text-6xl"
@@ -121,6 +187,8 @@ export function QuestionDashboard({
             </p>
           )}
         </div>
+      ) : (
+        <div aria-hidden className="hidden lg:block" />
       )}
     </div>
   );

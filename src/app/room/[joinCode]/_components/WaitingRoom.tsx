@@ -6,7 +6,12 @@ import { ResultView } from "./ResultView";
 import { ReactionBar } from "./ReactionBar";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
-type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
+type RunStatus =
+  | "LOBBY"
+  | "QUESTION_OPEN"
+  | "REVEALED"
+  | "LEADERBOARD"
+  | "FINISHED";
 
 type LeaderboardRow = {
   participantId: string;
@@ -108,7 +113,9 @@ export function WaitingRoom({
       />
     );
   } else if (
-    (state?.status === "LEADERBOARD" || state?.status === "FINISHED") &&
+    (state?.status === "REVEALED" ||
+      state?.status === "LEADERBOARD" ||
+      state?.status === "FINISHED") &&
     state.question
   ) {
     content = (

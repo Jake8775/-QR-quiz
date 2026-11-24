@@ -9,7 +9,12 @@ import { ReactionOverlay } from "./ReactionOverlay";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 type Participant = { id: string; nickname: string; online: boolean };
-type RunStatus = "LOBBY" | "QUESTION_OPEN" | "LEADERBOARD" | "FINISHED";
+type RunStatus =
+  | "LOBBY"
+  | "QUESTION_OPEN"
+  | "REVEALED"
+  | "LEADERBOARD"
+  | "FINISHED";
 
 type LeaderboardRow = {
   participantId: string;
@@ -28,7 +33,7 @@ type RunStatusResponse = {
   question?: {
     id: string;
     text: string;
-    options: { id: string; text: string }[];
+    options: { id: string; text: string; count?: number }[];
     closesAt?: string | null;
     timeLimitSeconds?: number | null;
     correctOptionId?: string | null;
@@ -166,11 +171,16 @@ export function LobbyClient({
         </div>
       </div>
     );
-  } else if (data.status === "QUESTION_OPEN" && data.question) {
+  } else if (
+    (data.status === "QUESTION_OPEN" || data.status === "REVEALED") &&
+    data.question
+  ) {
     content = (
-      <div className="flex min-h-screen flex-col items-center justify-center">
+      <div className="flex min-h-screen flex-col items-center justify-start">
         {actionError && (
-          <p className="mb-4 text-sm text-red-600">{actionError}</p>
+          <p className="mb-4 w-full text-center text-sm text-red-600">
+            {actionError}
+          </p>
         )}
         <QuestionDashboard
           key={data.question.id}
@@ -180,9 +190,13 @@ export function LobbyClient({
           timeLimitSeconds={data.question.timeLimitSeconds ?? null}
           submittedCount={data.submittedCount ?? 0}
           totalParticipants={data.count}
+          correctCount={data.correctCount}
           currentQuestionIndex={data.currentQuestionIndex}
           totalQuestions={data.totalQuestions}
+          revealed={data.status === "REVEALED"}
+          correctOptionId={data.question.correctOptionId ?? null}
           onReveal={() => callAction("reveal")}
+          onShowRanking={() => callAction("show-ranking")}
           submitting={submitting}
         />
       </div>

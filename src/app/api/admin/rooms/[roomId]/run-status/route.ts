@@ -128,9 +128,32 @@ export async function GET(
 
   const { data: roundAnswers } = await supabase
     .from("answers")
-    .select("is_correct")
+    .select("selected_option_id, is_correct")
     .eq("run_question_id", currentQuestion.id);
   const correctCount = (roundAnswers ?? []).filter((a) => a.is_correct).length;
+
+  if (run.status === "REVEALED") {
+    const counts = new Map<string, number>();
+    for (const a of roundAnswers ?? []) {
+      counts.set(a.selected_option_id, (counts.get(a.selected_option_id) ?? 0) + 1);
+    }
+
+    return NextResponse.json({
+      ...base,
+      question: {
+        id: currentQuestion.id,
+        text: currentQuestion.question_text,
+        options: (options ?? []).map((o) => ({
+          id: o.id,
+          text: o.option_text,
+          count: counts.get(o.id) ?? 0,
+        })),
+        correctOptionId: answerKey?.correct_option_id ?? null,
+      },
+      correctCount,
+      submittedCount: submittedCount ?? 0,
+    });
+  }
 
   const leaderboard = await buildLeaderboard(supabase, run.id);
 

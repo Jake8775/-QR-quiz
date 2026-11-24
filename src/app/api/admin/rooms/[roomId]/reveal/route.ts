@@ -65,7 +65,7 @@ export async function POST(
   const { error: runError } = await admin
     .from("quiz_runs")
     .update({
-      status: "LEADERBOARD",
+      status: "REVEALED",
       state_version: run.state_version + 1,
     })
     .eq("id", run.id);

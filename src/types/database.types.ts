@@ -1,6 +1,7 @@
 export type QuizRunStatus =
   | "LOBBY"
   | "QUESTION_OPEN"
+  | "REVEALED"
   | "LEADERBOARD"
   | "FINISHED";
 
