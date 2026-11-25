@@ -28,7 +28,7 @@ type LeaderboardRow = {
 
 type RunStatusResponse = {
   status: RunStatus;
-  mode?: "NORMAL" | "GROUP";
+  mode?: "NORMAL" | "GROUP" | "TEAM" | "SOLO";
   currentQuestionIndex: number;
   totalQuestions: number;
   participants: Participant[];
@@ -126,12 +126,13 @@ export function LobbyClient({
   }, [roomId]);
 
   // Separate poll for group-mode's own dashboard data -- only runs while
-  // the run is still LOBBY (group review happens before the game
-  // starts), and only once run-status has told us this room is GROUP
-  // mode. For normal mode data?.mode is always "NORMAL", so this never
-  // fires at all on that path.
+  // the run is still LOBBY (group/solo review happens before the game
+  // starts), and only once run-status has told us this room is GROUP or
+  // SOLO mode (TEAM's teams are pre-confirmed, nothing to review; NORMAL
+  // has no groups at all). For those two modes data?.mode never matches,
+  // so this never fires at all on those paths.
   useEffect(() => {
-    if (data?.mode !== "GROUP" || data.status !== "LOBBY") return;
+    if ((data?.mode !== "GROUP" && data?.mode !== "SOLO") || data.status !== "LOBBY") return;
     let cancelled = false;
 
     async function poll() {
@@ -185,7 +186,7 @@ export function LobbyClient({
         <p className="text-sm text-zinc-400">불러오는 중...</p>
       </div>
     );
-  } else if (data.status === "LOBBY" && data.mode === "GROUP") {
+  } else if (data.status === "LOBBY" && (data.mode === "GROUP" || data.mode === "SOLO")) {
     content = (
       <div className="flex min-h-screen flex-col px-6 py-8">
         {actionError && (
@@ -208,6 +209,7 @@ export function LobbyClient({
             onStart={() => callAction("start")}
             startDisabled={!groupsData.allConfirmed}
             startSubmitting={submitting}
+            hideGroupMechanics={data.mode === "SOLO"}
           />
         )}
       </div>

@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { joinRoomSchema } from "@/lib/validation/room";
+import { generateGroupPin } from "@/lib/groupMode/pin";
 
 const PARTICIPANT_COOKIE = "qz_participant";
 
@@ -28,12 +29,13 @@ export async function joinRoomAction(
 
   const { data: room } = await admin
     .from("rooms")
-    .select("id, active_run_id")
+    .select("id, active_run_id, quizzes(mode)")
     .eq("public_join_code", joinCode)
     .maybeSingle();
   if (!room || !room.active_run_id) {
     return { success: false, error: "존재하지 않는 방입니다" };
   }
+  const quiz = Array.isArray(room.quizzes) ? room.quizzes[0] : room.quizzes;
 
   const { data: run } = await admin
     .from("quiz_runs")
@@ -54,7 +56,7 @@ export async function joinRoomAction(
   const { data: participant, error } = await admin
     .from("participants")
     .insert({ run_id: room.active_run_id, nickname })
-    .select("participant_session_id")
+    .select("id, participant_session_id")
     .single();
 
   if (error || !participant) {
@@ -65,6 +67,63 @@ export async function joinRoomAction(
       };
     }
     return { success: false, error: "입장에 실패했습니다. 다시 시도해주세요" };
+  }
+
+  // SOLO mode: unlike GROUP/TEAM (which pick an existing team via the
+  // group+PIN flow), each participant authors their own single-person
+  // "group" -- created here, at join time, with no PIN step needed.
+  // Nothing else in the group-authoring pipeline (GroupWorkspace, the
+  // workspace/submit/lock/save routes, GroupModeLobbyDashboard,
+  // startSoloModeRun's flatten) needs to know a group has exactly one
+  // member; it's already written generically against group_id.
+  if (quiz?.mode === "SOLO") {
+    const { data: settings } = await admin
+      .from("solo_mode_settings")
+      .select("questions_per_person")
+      .eq("run_id", room.active_run_id)
+      .maybeSingle();
+    if (!settings) {
+      return { success: false, error: "개인별 출제전 설정을 찾을 수 없습니다" };
+    }
+
+    let groupId: string | null = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const pin = generateGroupPin();
+      const { data: insertedGroup, error: groupError } = await admin
+        .from("groups")
+        .insert({ run_id: room.active_run_id, name: nickname, pin, status: "DRAFTING" })
+        .select("id")
+        .single();
+      if (!insertedGroup) {
+        // Collision on either (run_id, name) -- duplicate nickname,
+        // already rejected above by the participants insert, so this
+        // path is PIN collision only -- or (run_id, pin). Retry.
+        if (groupError?.code === "23505") continue;
+        return { success: false, error: "입장에 실패했습니다. 다시 시도해주세요" };
+      }
+      groupId = insertedGroup.id;
+      break;
+    }
+    if (!groupId) {
+      return { success: false, error: "입장에 실패했습니다. 다시 시도해주세요" };
+    }
+
+    const slotRows = Array.from({ length: settings.questions_per_person }, (_, slotIndex) => ({
+      group_id: groupId!,
+      slot_index: slotIndex,
+    }));
+    const { error: slotsError } = await admin.from("group_question_slots").insert(slotRows);
+    if (slotsError) {
+      return { success: false, error: "입장에 실패했습니다. 다시 시도해주세요" };
+    }
+
+    const { error: updateError } = await admin
+      .from("participants")
+      .update({ group_id: groupId })
+      .eq("id", participant.id);
+    if (updateError) {
+      return { success: false, error: "입장에 실패했습니다. 다시 시도해주세요" };
+    }
   }
 
   const cookieStore = await cookies();

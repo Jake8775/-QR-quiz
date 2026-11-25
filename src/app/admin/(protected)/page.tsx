@@ -89,7 +89,7 @@ export default async function AdminHomePage() {
                     <p className="font-medium text-zinc-900">{quiz.title}</p>
                     {quiz.mode === "GROUP" && (
                       <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        조별
+                        조별 출제전
                       </span>
                     )}
                     {quiz.mode === "TEAM" && (
@@ -99,7 +99,7 @@ export default async function AdminHomePage() {
                     )}
                     {quiz.mode === "SOLO" && (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        개인별
+                        개인별 출제전
                       </span>
                     )}
                   </div>

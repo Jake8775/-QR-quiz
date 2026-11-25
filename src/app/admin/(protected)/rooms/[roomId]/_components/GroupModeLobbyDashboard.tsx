@@ -53,6 +53,7 @@ export function GroupModeLobbyDashboard({
   onStart,
   startDisabled,
   startSubmitting,
+  hideGroupMechanics = false,
 }: {
   roomId: string;
   groups: GroupData[];
@@ -61,6 +62,12 @@ export function GroupModeLobbyDashboard({
   onStart: () => void;
   startDisabled: boolean;
   startSubmitting: boolean;
+  // SOLO mode only -- each "group" is really just one participant, so
+  // its PIN (never used to join -- SOLO has no PIN step) and its
+  // "이동" button (moving a 1-person group's only member just renames
+  // who's in which group, not a real reassignment) are both meaningless.
+  // Defaults to false so GROUP mode's render is byte-identical.
+  hideGroupMechanics?: boolean;
 }) {
   const [busyGroupId, setBusyGroupId] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<GroupData | null>(null);
@@ -220,35 +227,37 @@ export function GroupModeLobbyDashboard({
                 </span>
               </div>
 
-              <div className="flex items-center gap-2">
-                {revealedPinGroupId === group.id ? (
-                  <>
-                    <code className="rounded bg-zinc-100 px-2 py-0.5 text-lg font-semibold">
-                      {group.pin}
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => setRevealedPinGroupId(null)}
-                      className="text-sm text-zinc-500 underline transition-colors hover:text-zinc-700"
-                    >
-                      숨기기
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <code className="rounded bg-zinc-100 px-2 py-0.5 text-lg font-semibold tracking-widest text-zinc-400">
-                      ••••
-                    </code>
-                    <button
-                      type="button"
-                      onClick={() => setRevealedPinGroupId(group.id)}
-                      className="text-sm text-zinc-500 underline transition-colors hover:text-zinc-700"
-                    >
-                      PIN 확인
-                    </button>
-                  </>
-                )}
-              </div>
+              {!hideGroupMechanics && (
+                <div className="flex items-center gap-2">
+                  {revealedPinGroupId === group.id ? (
+                    <>
+                      <code className="rounded bg-zinc-100 px-2 py-0.5 text-lg font-semibold">
+                        {group.pin}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => setRevealedPinGroupId(null)}
+                        className="text-sm text-zinc-500 underline transition-colors hover:text-zinc-700"
+                      >
+                        숨기기
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <code className="rounded bg-zinc-100 px-2 py-0.5 text-lg font-semibold tracking-widest text-zinc-400">
+                        ••••
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => setRevealedPinGroupId(group.id)}
+                        className="text-sm text-zinc-500 underline transition-colors hover:text-zinc-700"
+                      >
+                        PIN 확인
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="text-base text-zinc-500">
                 <span>
@@ -260,7 +269,7 @@ export function GroupModeLobbyDashboard({
                     {group.members.map((m) => (
                       <li key={m.id} className="flex items-center justify-between gap-2">
                         <span>{m.nickname}</span>
-                        {groups.length > 1 && (
+                        {!hideGroupMechanics && groups.length > 1 && (
                           <button
                             type="button"
                             disabled={busy}
