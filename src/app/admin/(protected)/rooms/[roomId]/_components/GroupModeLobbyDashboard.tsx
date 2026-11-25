@@ -69,6 +69,10 @@ export function GroupModeLobbyDashboard({
   );
   const [editTarget, setEditTarget] = useState<{ group: GroupData; slot: GroupSlot } | null>(null);
   const [errorByGroupId, setErrorByGroupId] = useState<Record<string, string>>({});
+  // Only one group's PIN is ever shown at a time -- this screen is beamed
+  // via projector for all participants to see, so a revealed PIN must not
+  // linger once the presenter moves on to announce the next group's.
+  const [revealedPinGroupId, setRevealedPinGroupId] = useState<string | null>(null);
 
   async function callGroupAction(
     groupId: string,
@@ -205,23 +209,48 @@ export function GroupModeLobbyDashboard({
           return (
             <div
               key={group.id}
-              className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-4"
+              className="flex flex-col gap-2 rounded-lg border border-zinc-200 bg-white p-5"
             >
               <div className="flex items-center justify-between">
-                <span className="font-medium text-zinc-900">{group.name}</span>
+                <span className="text-lg font-medium text-zinc-900">{group.name}</span>
                 <span
-                  className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_BADGE_CLASS[group.status]}`}
+                  className={`rounded-full px-3 py-1 text-sm font-medium ${STATUS_BADGE_CLASS[group.status]}`}
                 >
                   {STATUS_LABEL[group.status]}
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
-                <span>PIN</span>
-                <code className="rounded bg-zinc-100 px-2 py-0.5">{group.pin}</code>
+              <div className="flex items-center gap-2">
+                {revealedPinGroupId === group.id ? (
+                  <>
+                    <code className="rounded bg-zinc-100 px-2 py-0.5 text-lg font-semibold">
+                      {group.pin}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => setRevealedPinGroupId(null)}
+                      className="text-sm text-zinc-500 underline transition-colors hover:text-zinc-700"
+                    >
+                      숨기기
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <code className="rounded bg-zinc-100 px-2 py-0.5 text-lg font-semibold tracking-widest text-zinc-400">
+                      ••••
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => setRevealedPinGroupId(group.id)}
+                      className="text-sm text-zinc-500 underline transition-colors hover:text-zinc-700"
+                    >
+                      PIN 확인
+                    </button>
+                  </>
+                )}
               </div>
 
-              <div className="text-sm text-zinc-500">
+              <div className="text-base text-zinc-500">
                 <span>
                   조원 {group.members.length}명 (
                   {group.members.filter((m) => m.online).length}명 접속중)
@@ -247,7 +276,7 @@ export function GroupModeLobbyDashboard({
                 )}
               </div>
 
-              <p className="text-sm text-zinc-500">
+              <p className="text-base text-zinc-500">
                 완성 {group.completeCount} / {group.totalSlots}
               </p>
 
