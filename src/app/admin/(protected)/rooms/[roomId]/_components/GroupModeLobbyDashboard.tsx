@@ -311,7 +311,7 @@ export function GroupModeLobbyDashboard({
                       type="button"
                       disabled={busy}
                       onClick={() => setRejectTarget(group)}
-                      className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 disabled:opacity-50"
+                      className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                     >
                       반려
                     </button>
@@ -319,7 +319,7 @@ export function GroupModeLobbyDashboard({
                       type="button"
                       disabled={busy}
                       onClick={() => callGroupAction(group.id, "confirm")}
-                      className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+                      className="rounded-md bg-zinc-900 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
                     >
                       확정
                     </button>
@@ -331,7 +331,7 @@ export function GroupModeLobbyDashboard({
                       type="button"
                       disabled={busy}
                       onClick={() => callGroupAction(group.id, "unconfirm")}
-                      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 disabled:opacity-50"
+                      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
                     >
                       확정 해제 후 수정
                     </button>
@@ -339,7 +339,7 @@ export function GroupModeLobbyDashboard({
                       type="button"
                       disabled={busy}
                       onClick={() => setRejectTarget(group)}
-                      className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 disabled:opacity-50"
+                      className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                     >
                       확정 해제 후 반려
                     </button>
@@ -350,7 +350,7 @@ export function GroupModeLobbyDashboard({
                     type="button"
                     disabled={busy}
                     onClick={() => handleDeleteGroup(group)}
-                    className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 disabled:opacity-50"
+                    className="rounded-md border border-red-300 px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
                   >
                     빈 조 삭제
                   </button>
@@ -368,7 +368,7 @@ export function GroupModeLobbyDashboard({
           type="button"
           disabled={startDisabled || startSubmitting}
           onClick={onStart}
-          className="rounded-md bg-zinc-900 px-10 py-4 text-xl font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-zinc-900 px-10 py-4 text-xl font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
         >
           게임 시작
         </button>

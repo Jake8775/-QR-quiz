@@ -121,7 +121,7 @@ export function GroupJoinFlow({
             setError(null);
             setRetryAfterMs(null);
           }}
-          className="mb-6 text-sm text-zinc-500 underline"
+          className="mb-6 text-sm text-zinc-500 underline transition-colors hover:text-zinc-700"
         >
           조 다시 선택
         </button>
@@ -140,7 +140,7 @@ export function GroupJoinFlow({
           <button
             type="submit"
             disabled={submitting || locked || pin.length !== 4}
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
           >
             {submitting ? "확인 중..." : "입장하기"}
           </button>

@@ -76,7 +76,7 @@ export function LeaderboardDashboard({
         type="button"
         disabled={submitting}
         onClick={onNext}
-        className="mt-8 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white disabled:opacity-50"
+        className="mt-8 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
       >
         {isLastQuestion ? "퀴즈 종료" : "다음 문제"}
       </button>

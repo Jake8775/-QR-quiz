@@ -35,7 +35,7 @@ export function GroupRejectModal({
             type="button"
             onClick={onClose}
             disabled={submitting}
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 disabled:opacity-50"
+            className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 disabled:opacity-50"
           >
             취소
           </button>
@@ -43,7 +43,7 @@ export function GroupRejectModal({
             type="button"
             onClick={() => onConfirm(comment)}
             disabled={submitting || !comment.trim()}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
           >
             {submitting ? "처리 중..." : "반려"}
           </button>

@@ -107,7 +107,7 @@ export function QuestionView({
               className={`rounded-md border-2 px-3 py-2 text-left text-sm font-medium transition-colors ${
                 selectedOptionId === o.id
                   ? "border-blue-500 bg-blue-50 text-blue-900"
-                  : "border-zinc-300 bg-white text-zinc-700"
+                  : "border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400"
               }`}
             >
               {o.text}
@@ -118,7 +118,7 @@ export function QuestionView({
           type="button"
           disabled={!selectedOptionId || submitting}
           onClick={handleSubmit}
-          className="mt-4 w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="mt-4 w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
         >
           제출하기
         </button>

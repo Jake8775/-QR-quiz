@@ -260,7 +260,7 @@ export function LobbyClient({
             type="button"
             disabled={data.count === 0 || submitting}
             onClick={() => callAction("start")}
-            className="rounded-md bg-zinc-900 px-10 py-4 text-xl font-medium text-white disabled:opacity-50"
+            className="rounded-md bg-zinc-900 px-10 py-4 text-xl font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
           >
             퀴즈 시작
           </button>

@@ -42,11 +42,11 @@ export function QuizListActions({ quizId }: { quizId: string }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex gap-3 text-sm">
+    <div className="flex flex-col items-start gap-1">
+      <div className="flex flex-wrap gap-3 text-sm">
         <Link
           href={`/admin/quizzes/${quizId}/edit`}
-          className="text-zinc-600 underline"
+          className="text-zinc-600 underline transition-colors hover:text-zinc-900"
         >
           수정
         </Link>
@@ -54,7 +54,7 @@ export function QuizListActions({ quizId }: { quizId: string }) {
           type="button"
           onClick={handleDuplicate}
           disabled={busy}
-          className="text-zinc-600 underline disabled:opacity-50"
+          className="text-zinc-600 underline transition-colors hover:text-zinc-900 disabled:opacity-50"
         >
           복제
         </button>
@@ -62,7 +62,7 @@ export function QuizListActions({ quizId }: { quizId: string }) {
           type="button"
           onClick={handleCreateRoom}
           disabled={busy}
-          className="text-zinc-600 underline disabled:opacity-50"
+          className="text-zinc-600 underline transition-colors hover:text-zinc-900 disabled:opacity-50"
         >
           방 만들기
         </button>
@@ -70,7 +70,7 @@ export function QuizListActions({ quizId }: { quizId: string }) {
           type="button"
           onClick={handleDelete}
           disabled={busy}
-          className="text-red-600 underline disabled:opacity-50"
+          className="text-red-600 underline transition-colors hover:text-red-700 disabled:opacity-50"
         >
           삭제
         </button>

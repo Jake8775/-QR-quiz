@@ -151,7 +151,7 @@ export function GroupWorkspace({ joinCode }: { joinCode: string }) {
               type="button"
               onClick={handleSubmit}
               disabled={submitting || !!disabledReason}
-              className="rounded-md bg-zinc-900 px-6 py-3 text-base font-medium text-white disabled:opacity-50"
+              className="rounded-md bg-zinc-900 px-6 py-3 text-base font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
             >
               {submitting ? "제출 중..." : "제출하기"}
             </button>

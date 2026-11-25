@@ -138,7 +138,7 @@ export function QuizEditor({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
         >
           {saving ? "저장 중..." : "저장"}
         </button>

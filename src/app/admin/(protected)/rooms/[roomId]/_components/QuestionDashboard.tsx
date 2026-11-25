@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function computeRemaining(closesAt: string): number {
   return Math.max(0, (new Date(closesAt).getTime() - Date.now()) / 1000);
@@ -49,14 +49,27 @@ export function QuestionDashboard({
   const [remaining, setRemaining] = useState<number | null>(() =>
     closesAt ? computeRemaining(closesAt) : null,
   );
+  // Guards against firing onReveal more than once for the same question
+  // (e.g. if this effect re-runs after remaining already hit 0) — reset
+  // whenever a new question's closesAt comes in.
+  const autoRevealedRef = useRef(false);
+
+  useEffect(() => {
+    autoRevealedRef.current = false;
+  }, [closesAt]);
 
   useEffect(() => {
     if (!closesAt) return;
     const interval = setInterval(() => {
-      setRemaining(computeRemaining(closesAt));
+      const next = computeRemaining(closesAt);
+      setRemaining(next);
+      if (next <= 0 && !revealed && !autoRevealedRef.current) {
+        autoRevealedRef.current = true;
+        onReveal();
+      }
     }, 200);
     return () => clearInterval(interval);
-  }, [closesAt]);
+  }, [closesAt, revealed, onReveal]);
 
   const ratio =
     remaining !== null && timeLimitSeconds
@@ -152,7 +165,7 @@ export function QuestionDashboard({
               type="button"
               disabled={submitting}
               onClick={onReveal}
-              className="mt-6 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white disabled:opacity-50"
+              className="mt-6 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
             >
               결과 보기
             </button>
@@ -166,7 +179,7 @@ export function QuestionDashboard({
               type="button"
               disabled={submitting}
               onClick={onShowRanking}
-              className="mt-6 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white disabled:opacity-50"
+              className="mt-6 rounded-md bg-zinc-900 px-8 py-4 text-lg font-medium text-white transition-colors hover:bg-zinc-800 disabled:opacity-50"
             >
               순위 보기
             </button>

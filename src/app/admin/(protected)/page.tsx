@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { QuizListActions } from "./_components/QuizListActions";
 import { GroupModeQuizRowActions } from "./_components/GroupModeQuizRowActions";
+import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 async function logout() {
   "use server";
@@ -22,7 +23,9 @@ export default async function AdminHomePage() {
     .order("updated_at", { ascending: false });
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div className="relative min-h-screen overflow-hidden">
+      <SafetyBackdrop />
+      <div className="relative mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <p className="text-sm text-zinc-500">로그인됨</p>
@@ -45,13 +48,13 @@ export default async function AdminHomePage() {
         <div className="flex gap-2">
           <Link
             href="/admin/quizzes/new"
-            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             퀴즈 생성
           </Link>
           <Link
             href="/admin/rooms/new-group"
-            className="rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             조별모드 방 만들기
           </Link>
@@ -61,13 +64,13 @@ export default async function AdminHomePage() {
       {!quizzes || quizzes.length === 0 ? (
         <p className="text-sm text-zinc-500">아직 만든 퀴즈가 없습니다.</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {quizzes.map((quiz) => {
             const roomId = Array.isArray(quiz.rooms) ? quiz.rooms[0]?.id : undefined;
             return (
               <div
                 key={quiz.id}
-                className="flex items-center justify-between rounded-lg border border-zinc-200 bg-white px-4 py-3"
+                className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3"
               >
                 <div>
                   <div className="flex items-center gap-2">
@@ -94,6 +97,7 @@ export default async function AdminHomePage() {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }
