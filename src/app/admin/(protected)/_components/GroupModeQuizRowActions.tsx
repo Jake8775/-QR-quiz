@@ -5,13 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { deleteQuizAction } from "../quizzes/actions";
 
-// Group-mode quizzes have no author-written questions to edit/duplicate --
-// members write them after the room exists -- so 수정/복제/방 만들기 are
-// hidden here entirely (the room is already created at creation time) in
-// favor of "방 보기" straight to the dashboard. 삭제 reuses the existing
-// deleteQuizAction unmodified; its FK (rooms.quiz_id on delete restrict)
-// already protects against deleting a quiz with a live room the same way
-// it does for normal mode.
+// Shared row actions for every "room already exists at creation time"
+// mode (GROUP, TEAM, SOLO) -- none of them have a standalone quiz-editor
+// screen to route 수정/복제/방 만들기 to, so only "방 보기"/"삭제" make
+// sense. 삭제 reuses the existing deleteQuizAction unmodified; its FK
+// (rooms.quiz_id on delete restrict) already protects against deleting a
+// quiz with a live room the same way it does for normal mode.
 export function GroupModeQuizRowActions({
   quizId,
   roomId,
@@ -25,7 +24,7 @@ export function GroupModeQuizRowActions({
 
   async function handleDelete() {
     if (busy) return;
-    if (!confirm("이 조별모드 방을 삭제하시겠습니까?")) return;
+    if (!confirm("이 방을 삭제하시겠습니까?")) return;
     setBusy(true);
     setError(null);
     const result = await deleteQuizAction(quizId);

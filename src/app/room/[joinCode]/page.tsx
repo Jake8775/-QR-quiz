@@ -31,7 +31,15 @@ export default async function RoomPage({
 
   const quiz = Array.isArray(room.quizzes) ? room.quizzes[0] : room.quizzes;
   const quizTitle = quiz?.title ?? "";
-  const isGroupMode = quiz?.mode === "GROUP";
+  // GROUP and TEAM both put participants through the group+PIN picker
+  // (TEAM's teams are pre-created/CONFIRMED, so there's nothing to author
+  // afterward). GROUP and SOLO both route a DRAFTING group into the
+  // authoring workspace -- SOLO's own 1-person group is created directly
+  // at join time (see joinRoomAction), so no PIN step is needed first.
+  // NORMAL has neither flag set, so both branches below stay
+  // unreachable for it exactly as before.
+  const usesGroupJoinFlow = quiz?.mode === "GROUP" || quiz?.mode === "TEAM";
+  const usesWorkspace = quiz?.mode === "GROUP" || quiz?.mode === "SOLO";
 
   const cookieStore = await cookies();
   const sessionId = cookieStore.get(PARTICIPANT_COOKIE)?.value;
@@ -48,18 +56,13 @@ export default async function RoomPage({
       .maybeSingle();
 
     if (participant) {
-      // Group mode inserts two extra steps between nickname join and the
-      // waiting room: pick a group + enter its PIN, then write questions
-      // in the group workspace until the group is submitted/confirmed.
-      // Normal mode never has group_id set (it stays permanently null),
-      // so both branches are unreachable for every normal-mode participant.
-      if (isGroupMode && !participant.group_id) {
+      if (usesGroupJoinFlow && !participant.group_id) {
         return <GroupJoinFlow joinCode={joinCode} quizTitle={quizTitle} />;
       }
       const group = Array.isArray(participant.groups)
         ? participant.groups[0]
         : participant.groups;
-      if (isGroupMode && group?.status === "DRAFTING") {
+      if (usesWorkspace && group?.status === "DRAFTING") {
         return <GroupWorkspace joinCode={joinCode} />;
       }
       return (

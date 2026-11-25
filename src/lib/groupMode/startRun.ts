@@ -26,17 +26,42 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
-// Called from the normal-mode start route's mode==='GROUP' branch (see
-// start/route.ts) once ownership of the room/run has already been
-// proven via the RLS-scoped `supabase` client. Flattens every group's
-// confirmed slots into the exact same run_questions/run_options/
-// run_answer_keys shape normal mode already produces -- by the time
-// this returns, reveal/show-ranking/next don't need to know group mode
-// exists. The only addition is source_group_id on each run_questions
-// row and a one-time member_snapshot write per group.
-export async function startGroupModeRun(
+// Snapshot membership now, at game start -- members leaving/
+// disconnecting mid-game must not change the authoring-group display or
+// the group-score average's denominator (spec R6/8-2b). Shared by GROUP
+// mode's flatten-and-start below and TEAM mode's start/route.ts branch
+// (TEAM has no slots to flatten -- run_questions already exist -- but
+// still needs this snapshot for buildGroupScores' averages).
+export async function snapshotGroupMembership(
+  admin: ReturnType<typeof createAdminClient>,
+  runId: string,
+): Promise<void> {
+  const { data: groups } = await admin.from("groups").select("id").eq("run_id", runId);
+  const { data: members } = await admin
+    .from("participants")
+    .select("id, nickname, group_id")
+    .eq("run_id", runId)
+    .not("group_id", "is", null);
+
+  for (const group of groups ?? []) {
+    const groupMembers = (members ?? [])
+      .filter((m) => m.group_id === group.id)
+      .map((m) => ({ participantId: m.id, nickname: m.nickname }));
+    await admin.from("groups").update({ member_snapshot: groupMembers }).eq("id", group.id);
+  }
+}
+
+// Shared core: validate every group is CONFIRMED, flatten+shuffle their
+// slots into run_questions/run_options/run_answer_keys (source_group_id
+// tagged), snapshot membership, and open question 1. Used by both
+// startGroupModeRun (group_mode_settings) and startSoloModeRun
+// (solo_mode_settings) below -- the only difference between the two
+// callers is which settings table supplies timeLimitSeconds and which
+// error string to show when it's missing.
+async function flattenAndStart(
   supabase: Awaited<ReturnType<typeof createClient>>,
   runId: string,
+  timeLimitSeconds: number,
 ): Promise<{ error?: string; status?: number }> {
   const { data: groups } = await supabase
     .from("groups")
@@ -54,15 +79,6 @@ export async function startGroupModeRun(
         .join(", ")})`,
       status: 409,
     };
-  }
-
-  const { data: settings } = await supabase
-    .from("group_mode_settings")
-    .select("time_limit_seconds")
-    .eq("run_id", runId)
-    .maybeSingle();
-  if (!settings) {
-    return { error: "조별모드 설정을 찾을 수 없습니다", status: 409 };
   }
 
   // group_question_slots has zero RLS policies for any role (same
@@ -87,24 +103,7 @@ export async function startGroupModeRun(
     };
   }
 
-  const { data: members } = await admin
-    .from("participants")
-    .select("id, nickname, group_id")
-    .eq("run_id", runId)
-    .not("group_id", "is", null);
-
-  // Snapshot membership now, at game start -- members leaving/
-  // disconnecting mid-game must not change the authoring-group display
-  // or the group-score average's denominator (spec R6/8-2b).
-  for (const group of groups) {
-    const groupMembers = (members ?? [])
-      .filter((m) => m.group_id === group.id)
-      .map((m) => ({ participantId: m.id, nickname: m.nickname }));
-    await admin
-      .from("groups")
-      .update({ member_snapshot: groupMembers })
-      .eq("id", group.id);
-  }
+  await snapshotGroupMembership(admin, runId);
 
   // Shuffle group order; within each group, preserve the slots' own
   // order_index (spec 8-2: "조 순서는 게임 시작 시 무작위로 정하고, 조 안의
@@ -135,7 +134,7 @@ export async function startGroupModeRun(
         source_group_id: slot.group_id,
         order_index: orderIndex,
         question_text: slot.question_text,
-        time_limit_seconds: settings.time_limit_seconds,
+        time_limit_seconds: timeLimitSeconds,
       })
       .select("id")
       .single();
@@ -197,7 +196,7 @@ export async function startGroupModeRun(
   const openError = await openQuestion(admin, {
     runId,
     runQuestionId: firstRunQuestionId,
-    timeLimitSeconds: settings.time_limit_seconds,
+    timeLimitSeconds,
     currentQuestionIndex: 0,
     stateVersion: run.state_version,
   });
@@ -206,4 +205,40 @@ export async function startGroupModeRun(
   }
 
   return {};
+}
+
+// Thin wrapper: GROUP mode's own settings table + the shared flatten
+// core above.
+export async function startGroupModeRun(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  runId: string,
+): Promise<{ error?: string; status?: number }> {
+  const { data: settings } = await supabase
+    .from("group_mode_settings")
+    .select("time_limit_seconds")
+    .eq("run_id", runId)
+    .maybeSingle();
+  if (!settings) {
+    return { error: "조별모드 설정을 찾을 수 없습니다", status: 409 };
+  }
+  return flattenAndStart(supabase, runId, settings.time_limit_seconds);
+}
+
+// Thin wrapper: SOLO mode's own settings table + the same shared
+// flatten core -- SOLO groups are 1-person "groups" created dynamically
+// at join time (see joinRoomAction), so by the time this runs they look
+// exactly like GROUP mode's groups to flattenAndStart.
+export async function startSoloModeRun(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  runId: string,
+): Promise<{ error?: string; status?: number }> {
+  const { data: settings } = await supabase
+    .from("solo_mode_settings")
+    .select("time_limit_seconds")
+    .eq("run_id", runId)
+    .maybeSingle();
+  if (!settings) {
+    return { error: "개인별 출제전 설정을 찾을 수 없습니다", status: 409 };
+  }
+  return flattenAndStart(supabase, runId, settings.time_limit_seconds);
 }

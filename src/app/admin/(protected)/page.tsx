@@ -45,18 +45,30 @@ export default async function AdminHomePage() {
 
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-zinc-900">내 퀴즈</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/admin/quizzes/new"
             className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
-            퀴즈 생성
+            개인전
+          </Link>
+          <Link
+            href="/admin/rooms/new-team"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            팀전
+          </Link>
+          <Link
+            href="/admin/rooms/new-solo"
+            className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+          >
+            개인별 출제전
           </Link>
           <Link
             href="/admin/rooms/new-group"
             className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
-            조별모드 방 만들기
+            조별 출제전
           </Link>
         </div>
       </div>
@@ -80,14 +92,24 @@ export default async function AdminHomePage() {
                         조별
                       </span>
                     )}
+                    {quiz.mode === "TEAM" && (
+                      <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+                        팀전
+                      </span>
+                    )}
+                    {quiz.mode === "SOLO" && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        개인별
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-zinc-500">
-                    {quiz.mode === "GROUP"
-                      ? "조원 작성 문제"
+                    {quiz.mode === "GROUP" || quiz.mode === "SOLO"
+                      ? "참가자 작성 문제"
                       : `문제 ${quiz.questions?.[0]?.count ?? 0}개`}
                   </p>
                 </div>
-                {quiz.mode === "GROUP" ? (
+                {quiz.mode === "GROUP" || quiz.mode === "TEAM" || quiz.mode === "SOLO" ? (
                   <GroupModeQuizRowActions quizId={quiz.id} roomId={roomId} />
                 ) : (
                   <QuizListActions quizId={quiz.id} />

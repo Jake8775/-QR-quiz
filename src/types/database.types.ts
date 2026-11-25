@@ -5,7 +5,7 @@ export type QuizRunStatus =
   | "LEADERBOARD"
   | "FINISHED";
 
-export type QuizMode = "NORMAL" | "GROUP";
+export type QuizMode = "NORMAL" | "GROUP" | "TEAM" | "SOLO";
 export type GroupStatus = "DRAFTING" | "SUBMITTED" | "CONFIRMED";
 
 export interface Database {
@@ -472,6 +472,26 @@ export interface Database {
           questions_per_group?: number;
           time_limit_seconds?: number;
           group_count?: number;
+        };
+      };
+      solo_mode_settings: {
+        Row: {
+          run_id: string;
+          topic: string;
+          questions_per_person: number;
+          time_limit_seconds: number;
+        };
+        Insert: {
+          run_id: string;
+          topic: string;
+          questions_per_person: number;
+          time_limit_seconds: number;
+        };
+        Update: {
+          run_id?: string;
+          topic?: string;
+          questions_per_person?: number;
+          time_limit_seconds?: number;
         };
       };
       group_status_history: {

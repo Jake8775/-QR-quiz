@@ -68,13 +68,19 @@ export async function GET(
     count: participantsWithStatus.length,
   };
 
+  // GROUP/SOLO both need the per-group-excluded answeredQuestions count
+  // (R2 -- a participant never answers their own group's/their own
+  // questions). TEAM needs the group-average scores but not that
+  // correction, since every team participant answers every question.
+  const usesGroupAwareLeaderboard = mode === "GROUP" || mode === "SOLO";
+  const usesGroupScores = mode === "GROUP" || mode === "TEAM";
+
   if (run.status === "LOBBY" || run.status === "FINISHED") {
     if (run.status === "FINISHED") {
-      const leaderboard =
-        mode === "GROUP"
-          ? await buildGroupAwareLeaderboard(supabase, run.id)
-          : await buildLeaderboard(supabase, run.id);
-      const groupScores = mode === "GROUP" ? await buildGroupScores(supabase, run.id) : undefined;
+      const leaderboard = usesGroupAwareLeaderboard
+        ? await buildGroupAwareLeaderboard(supabase, run.id)
+        : await buildLeaderboard(supabase, run.id);
+      const groupScores = usesGroupScores ? await buildGroupScores(supabase, run.id) : undefined;
       return NextResponse.json({ ...base, leaderboard, groupScores });
     }
     return NextResponse.json(base);
@@ -184,11 +190,10 @@ export async function GET(
     });
   }
 
-  const leaderboard =
-    mode === "GROUP"
-      ? await buildGroupAwareLeaderboard(supabase, run.id)
-      : await buildLeaderboard(supabase, run.id);
-  const groupScores = mode === "GROUP" ? await buildGroupScores(supabase, run.id) : undefined;
+  const leaderboard = usesGroupAwareLeaderboard
+    ? await buildGroupAwareLeaderboard(supabase, run.id)
+    : await buildLeaderboard(supabase, run.id);
+  const groupScores = usesGroupScores ? await buildGroupScores(supabase, run.id) : undefined;
 
   // D3: on a group's LAST question's result screen, announce which
   // group is up next -- this is the only point where "next group" can

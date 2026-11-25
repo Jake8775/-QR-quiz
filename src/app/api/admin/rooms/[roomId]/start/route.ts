@@ -2,7 +2,11 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { openQuestion } from "@/lib/runEngine/openQuestion";
-import { startGroupModeRun } from "@/lib/groupMode/startRun";
+import {
+  startGroupModeRun,
+  startSoloModeRun,
+  snapshotGroupMembership,
+} from "@/lib/groupMode/startRun";
 
 export async function POST(
   _request: Request,
@@ -49,6 +53,13 @@ export async function POST(
     }
     return NextResponse.json({ ok: true });
   }
+  if (quiz?.mode === "SOLO") {
+    const result = await startSoloModeRun(supabase, run.id);
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+    return NextResponse.json({ ok: true });
+  }
 
   const { data: firstQuestion } = await supabase
     .from("run_questions")
@@ -68,6 +79,16 @@ export async function POST(
   // actual state transition must go through the service-role client --
   // ownership was already proven by the RLS reads above.
   const admin = createAdminClient();
+
+  // TEAM mode: run_questions already exist (the presenter authored them
+  // directly at room-creation time, like NORMAL) -- no flattening
+  // needed, just a one-time membership snapshot so buildGroupScores can
+  // compute each team's average once the run finishes. NORMAL mode has
+  // no `groups` rows at all, so this is a no-op there.
+  if (quiz?.mode === "TEAM") {
+    await snapshotGroupMembership(admin, run.id);
+  }
+
   const openError = await openQuestion(admin, {
     runId: run.id,
     runQuestionId: firstQuestion.id,
