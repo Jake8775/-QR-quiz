@@ -428,7 +428,7 @@ test.describe("group mode (조별모드)", () => {
     await rejectModal.locator("textarea").fill("문제를 더 명확하게 작성해주세요");
     await rejectModal.getByRole("button", { name: "반려", exact: true }).click();
     const g3Card = presenter
-      .locator("div.rounded-lg.border.border-zinc-200.bg-white.p-4")
+      .locator("div.rounded-lg.border.border-zinc-200.bg-white.p-5")
       .filter({ hasText: g3.name });
     await expect(g3Card.getByText("작성 중")).toBeVisible({ timeout: ASSERT_TIMEOUT });
 

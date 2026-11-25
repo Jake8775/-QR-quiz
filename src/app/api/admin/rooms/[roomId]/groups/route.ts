@@ -37,17 +37,29 @@ export async function GET(
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
-  const { data: settings } = await supabase
-    .from("group_mode_settings")
-    .select("topic, questions_per_group, time_limit_seconds, group_count")
-    .eq("run_id", run.id)
-    .maybeSingle();
+  // groups has an owner_select RLS policy so the RLS-scoped client above
+  // is already allowed to read group_question_slots-adjacent summary
+  // data, but group_question_slots itself has zero RLS policies (same
+  // posture as question_answer_keys) -- the presenter's slot-content
+  // visibility (completion counts, per-slot lock holders) goes through
+  // the admin client, which is safe here because ownership of every
+  // groupId is proven by the RLS-gated `groups` read below.
+  const admin = createAdminClient();
 
-  const { data: groups } = await supabase
-    .from("groups")
-    .select("id, name, pin, status, status_version, created_at")
-    .eq("run_id", run.id)
-    .order("created_at", { ascending: true });
+  // settings and groups both only depend on run.id -- independent reads,
+  // fired together instead of one-after-another.
+  const [{ data: settings }, { data: groups }] = await Promise.all([
+    supabase
+      .from("group_mode_settings")
+      .select("topic, questions_per_group, time_limit_seconds, group_count")
+      .eq("run_id", run.id)
+      .maybeSingle(),
+    supabase
+      .from("groups")
+      .select("id, name, pin, status, status_version, created_at")
+      .eq("run_id", run.id)
+      .order("created_at", { ascending: true }),
+  ]);
 
   if (!groups) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -55,33 +67,33 @@ export async function GET(
 
   const groupIds = groups.map((g) => g.id);
 
-  const { data: histories } = await supabase
-    .from("group_status_history")
-    .select("group_id, comment, to_status, created_at")
-    .in("group_id", groupIds.length > 0 ? groupIds : [""])
-    .order("created_at", { ascending: false });
+  // histories/slots/members each only depend on groupIds or run.id (not
+  // on each other) -- same parallelization as above.
+  const [{ data: histories }, { data: slots }, { data: members }] = await Promise.all([
+    supabase
+      .from("group_status_history")
+      .select("group_id, comment, to_status, created_at")
+      .in("group_id", groupIds.length > 0 ? groupIds : [""])
+      .order("created_at", { ascending: false }),
+    admin
+      .from("group_question_slots")
+      .select(
+        "id, group_id, slot_index, question_text, options, correct_option_temp_id, presenter_comment, presenter_edited, last_edited_at",
+      )
+      .in("group_id", groupIds.length > 0 ? groupIds : [""]),
+    supabase
+      .from("participants")
+      .select("id, nickname, group_id, last_seen_at")
+      .eq("run_id", run.id)
+      .not("group_id", "is", null),
+  ]);
+
   const latestHistoryByGroupId = new Map<string, { comment: string | null; to_status: string }>();
   for (const h of histories ?? []) {
     if (!latestHistoryByGroupId.has(h.group_id)) {
       latestHistoryByGroupId.set(h.group_id, { comment: h.comment, to_status: h.to_status });
     }
   }
-
-  // groups has an owner_select RLS policy so the RLS-scoped client above
-  // is already allowed to read group_question_slots-adjacent summary
-  // data, but group_question_slots itself has zero RLS policies (same
-  // posture as question_answer_keys) -- the presenter's slot-content
-  // visibility (completion counts, per-slot lock holders) goes through
-  // the admin client, which is safe here because ownership of every
-  // groupId above was already proven by the RLS-gated `groups` read.
-  const admin = createAdminClient();
-
-  const { data: slots } = await admin
-    .from("group_question_slots")
-    .select(
-      "id, group_id, slot_index, question_text, options, correct_option_temp_id, presenter_comment, presenter_edited, last_edited_at",
-    )
-    .in("group_id", groupIds.length > 0 ? groupIds : [""]);
 
   const { data: locks } = await admin
     .from("group_question_locks")
@@ -90,12 +102,6 @@ export async function GET(
       "slot_id",
       (slots ?? []).map((s) => s.id).length > 0 ? (slots ?? []).map((s) => s.id) : [""],
     );
-
-  const { data: members } = await supabase
-    .from("participants")
-    .select("id, nickname, group_id, last_seen_at")
-    .eq("run_id", run.id)
-    .not("group_id", "is", null);
 
   const { data: lockHolders } = await admin
     .from("participants")
