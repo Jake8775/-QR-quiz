@@ -22,6 +22,17 @@ const BADGE_CLASS: Record<QuizMode, string> = {
   GROUP: "bg-blue-100 text-blue-700",
 };
 
+// Per-card badge text -- SOLO/GROUP's labels wrap onto a second line at
+// a fixed point ("개인별"/"출제전") instead of wherever the badge's width
+// happens to force a break, so every badge in a column looks the same
+// shape regardless of the card's width.
+const BADGE_LABEL: Record<QuizMode, string> = {
+  NORMAL: "개인전",
+  TEAM: "팀전",
+  SOLO: "개인별\n출제전",
+  GROUP: "조별\n출제전",
+};
+
 // Four independent columns, one per quiz mode -- each has its own
 // checkbox selection and "선택 삭제" button so selecting quizzes in one
 // mode's column never interacts with another's. Deletion here is a
@@ -103,9 +114,10 @@ function ModeColumn({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-zinc-900">{title}</h2>
-        {quizzes.length > 0 && (
+      <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+
+      {quizzes.length > 0 && (
+        <div className="flex flex-col items-start gap-2">
           <label className="flex items-center gap-1 text-xs text-zinc-500">
             <input
               type="checkbox"
@@ -115,18 +127,15 @@ function ModeColumn({
             />
             전체선택
           </label>
-        )}
-      </div>
-
-      {quizzes.length > 0 && (
-        <button
-          type="button"
-          onClick={handleDeleteSelected}
-          disabled={busy || selected.size === 0}
-          className="self-start rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          선택 삭제 ({selected.size})
-        </button>
+          <button
+            type="button"
+            onClick={handleDeleteSelected}
+            disabled={busy || selected.size === 0}
+            className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            선택 삭제 ({selected.size})
+          </button>
+        </div>
       )}
       {error && <p className="text-xs text-red-600">{error}</p>}
 
@@ -146,27 +155,25 @@ function ModeColumn({
                   onChange={() => toggle(quiz.id)}
                   className="mt-1 h-3.5 w-3.5 shrink-0"
                 />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-zinc-900">{quiz.title}</p>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${BADGE_CLASS[mode]}`}
-                    >
-                      {title}
-                    </span>
-                  </div>
-                  <p className="text-xs text-zinc-500">
-                    {mode === "GROUP" || mode === "SOLO"
-                      ? "참가자 작성 문제"
-                      : `문제 ${quiz.questionCount}개`}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-medium text-zinc-900">{quiz.title}</p>
+                  <span
+                    className={`whitespace-pre-line rounded-full px-2 py-0.5 text-center text-xs font-medium leading-tight ${BADGE_CLASS[mode]}`}
+                  >
+                    {BADGE_LABEL[mode]}
+                  </span>
                 </div>
               </div>
 
               {mode === "GROUP" || mode === "SOLO" ? (
                 <GroupModeQuizRowActions quizId={quiz.id} rooms={quiz.rooms} />
               ) : (
-                <QuizListActions quizId={quiz.id} mode={mode} rooms={quiz.rooms} />
+                <QuizListActions
+                  quizId={quiz.id}
+                  mode={mode}
+                  rooms={quiz.rooms}
+                  questionCount={quiz.questionCount}
+                />
               )}
             </div>
           ))}

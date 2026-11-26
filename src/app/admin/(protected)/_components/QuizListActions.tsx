@@ -15,6 +15,7 @@ export function QuizListActions({
   quizId,
   mode = "NORMAL",
   rooms = [],
+  questionCount,
 }: {
   quizId: string;
   // NORMAL creates a room immediately with no extra input. TEAM needs a
@@ -28,6 +29,8 @@ export function QuizListActions({
   // game history, and RoomListForQuiz lets the presenter inspect/delete
   // them individually without touching the quiz itself.
   rooms?: RoomSummary[];
+  // Shown on the same row as "방 목록 보기", right-aligned.
+  questionCount: number;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -121,7 +124,10 @@ export function QuizListActions({
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
-      <RoomListForQuiz rooms={rooms} />
+      <div className="flex items-center justify-between gap-2">
+        <RoomListForQuiz rooms={rooms} />
+        <span className="shrink-0 text-xs text-zinc-500">문제 {questionCount}개</span>
+      </div>
       {showTeamModal && (
         <TeamGroupCountModal
           submitting={busy}
