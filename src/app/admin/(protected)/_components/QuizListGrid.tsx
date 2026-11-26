@@ -114,29 +114,30 @@ function ModeColumn({
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
-
-      {quizzes.length > 0 && (
-        <div className="flex flex-col items-start gap-2">
-          <label className="flex items-center gap-1 text-xs text-zinc-500">
-            <input
-              type="checkbox"
-              checked={selected.size === quizzes.length}
-              onChange={toggleAll}
-              className="h-3.5 w-3.5"
-            />
-            전체선택
-          </label>
-          <button
-            type="button"
-            onClick={handleDeleteSelected}
-            disabled={busy || selected.size === 0}
-            className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            선택 삭제 ({selected.size})
-          </button>
-        </div>
-      )}
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-zinc-900">{title}</h2>
+        {quizzes.length > 0 && (
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1 text-xs text-zinc-500">
+              <input
+                type="checkbox"
+                checked={selected.size === quizzes.length}
+                onChange={toggleAll}
+                className="h-3.5 w-3.5"
+              />
+              전체선택
+            </label>
+            <button
+              type="button"
+              onClick={handleDeleteSelected}
+              disabled={busy || selected.size === 0}
+              className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              선택 삭제 ({selected.size})
+            </button>
+          </div>
+        )}
+      </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
 
       {quizzes.length === 0 ? (

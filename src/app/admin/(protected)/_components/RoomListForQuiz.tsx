@@ -79,14 +79,14 @@ export function RoomListForQuiz({ rooms }: { rooms: RoomSummary[] }) {
       </button>
 
       {expanded && (
-        <div className="flex flex-col gap-1.5 rounded-md border border-zinc-100 bg-zinc-50 p-2">
+        <div className="flex flex-col gap-1.5 border-t border-zinc-100 pt-2">
           {rooms.map((room) => (
             <div key={room.id} className="flex items-center gap-2 text-xs">
               <input
                 type="checkbox"
                 checked={selected.has(room.id)}
                 onChange={() => toggle(room.id)}
-                className="h-3.5 w-3.5"
+                className="h-3.5 w-3.5 shrink-0"
               />
               <span
                 className={`rounded-full px-2 py-0.5 font-medium ${
