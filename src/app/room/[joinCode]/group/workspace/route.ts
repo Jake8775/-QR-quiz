@@ -102,8 +102,19 @@ export async function GET(
     .limit(1)
     .maybeSingle();
 
+  // Mode-agnostic: GROUP rooms have a group_mode_settings row, SOLO rooms
+  // have a solo_mode_settings row -- exactly one of the two exists for any
+  // given run, so querying both and taking whichever resolves is safe
+  // without knowing quizzes.mode here.
+  const [{ data: groupSettings }, { data: soloSettings }] = await Promise.all([
+    admin.from("group_mode_settings").select("topic").eq("run_id", run.id).maybeSingle(),
+    admin.from("solo_mode_settings").select("topic").eq("run_id", run.id).maybeSingle(),
+  ]);
+  const topic = groupSettings?.topic ?? soloSettings?.topic ?? null;
+
   return NextResponse.json({
     runStatus: run.status,
+    topic,
     group: { id: group.id, name: group.name, status: group.status },
     rejectionComment:
       group.status === "DRAFTING" && latestHistory?.to_status === "DRAFTING"

@@ -23,7 +23,17 @@ export const questionDraftSchema = z
   .refine((q) => q.options.some((o) => o.tempId === q.correctOptionTempId), {
     message: "정답으로 선택한 보기가 존재하지 않습니다",
     path: ["correctOptionTempId"],
-  });
+  })
+  .refine(
+    (q) => {
+      const texts = q.options.map((o) => o.optionText);
+      return new Set(texts).size === texts.length;
+    },
+    {
+      message: "보기 내용이 서로 중복됩니다",
+      path: ["options"],
+    },
+  );
 
 export const quizEditorSchema = z.object({
   quizId: z.string().uuid().nullable(),

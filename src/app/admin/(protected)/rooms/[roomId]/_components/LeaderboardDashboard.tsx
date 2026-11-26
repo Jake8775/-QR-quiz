@@ -27,6 +27,7 @@ export function LeaderboardDashboard({
   submitting,
   nextAuthoringGroup,
   groupScores,
+  spectatorCount,
 }: {
   correctCount: number;
   totalParticipants: number;
@@ -37,12 +38,18 @@ export function LeaderboardDashboard({
   // Group mode only -- undefined for every normal-mode render.
   nextAuthoringGroup?: { name: string; members: string[] };
   groupScores?: GroupScoreRow[];
+  // Group/solo mode only -- count of participants excluded from
+  // totalParticipants because they authored the current question.
+  spectatorCount?: number;
 }) {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center px-4 text-center">
       <p className="text-sm text-zinc-500">
         정답자 {correctCount} / {totalParticipants}
       </p>
+      {!!spectatorCount && (
+        <p className="text-sm text-zinc-400">관전 중 {spectatorCount}명</p>
+      )}
       <h2 className="mt-2 mb-6 text-3xl font-semibold text-zinc-900 sm:text-4xl">
         이번 라운드 순위
       </h2>

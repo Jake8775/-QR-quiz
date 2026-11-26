@@ -114,6 +114,15 @@ export async function GET(
     }
   }
 
+  // Members of the authoring group can't answer their own question (the
+  // answer route's spectator guard blocks them) -- so the "N/M" denominator
+  // shown on the presenter's question/reveal/leaderboard screens should
+  // exclude them. base.count (the full-run participant count used by the
+  // lobby's participant-list panel) stays untouched; this is a separate
+  // display-only figure.
+  const spectatorCount = authoringGroup?.members.length ?? 0;
+  const activeParticipantCount = base.count - spectatorCount;
+
   const { data: options } = await supabase
     .from("run_options")
     .select("id, option_text, order_index")
@@ -147,6 +156,8 @@ export async function GET(
       },
       submittedCount: submittedCount ?? 0,
       authoringGroup,
+      activeParticipantCount,
+      spectatorCount,
     });
   }
 
@@ -187,6 +198,8 @@ export async function GET(
       correctCount,
       submittedCount: submittedCount ?? 0,
       authoringGroup,
+      activeParticipantCount,
+      spectatorCount,
     });
   }
 
@@ -237,6 +250,8 @@ export async function GET(
     groupScores,
     authoringGroup,
     nextAuthoringGroup,
+    activeParticipantCount,
+    spectatorCount,
   });
 }
 

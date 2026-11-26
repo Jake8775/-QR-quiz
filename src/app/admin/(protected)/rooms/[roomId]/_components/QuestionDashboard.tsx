@@ -28,6 +28,7 @@ export function QuestionDashboard({
   onShowRanking,
   submitting,
   authoringGroup,
+  spectatorCount,
 }: {
   questionText: string;
   options: { id: string; text: string; count?: number }[];
@@ -45,6 +46,9 @@ export function QuestionDashboard({
   submitting: boolean;
   // Group mode only -- undefined for every normal-mode render.
   authoringGroup?: { name: string; members: string[] };
+  // Group/solo mode only -- count of participants excluded from
+  // totalParticipants because they authored the current question.
+  spectatorCount?: number;
 }) {
   const [remaining, setRemaining] = useState<number | null>(() =>
     closesAt ? computeRemaining(closesAt) : null,
@@ -161,6 +165,9 @@ export function QuestionDashboard({
             <p className="mt-8 text-lg text-zinc-500 sm:text-xl">
               제출 {submittedCount} / {totalParticipants}
             </p>
+            {!!spectatorCount && (
+              <p className="text-sm text-zinc-400">관전 중 {spectatorCount}명</p>
+            )}
             <button
               type="button"
               disabled={submitting}
@@ -175,6 +182,9 @@ export function QuestionDashboard({
             <p className="mt-8 text-lg text-zinc-500 sm:text-xl">
               정답자 {correctCount ?? 0} / {totalParticipants}명
             </p>
+            {!!spectatorCount && (
+              <p className="text-sm text-zinc-400">관전 중 {spectatorCount}명</p>
+            )}
             <button
               type="button"
               disabled={submitting}

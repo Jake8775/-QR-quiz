@@ -77,6 +77,10 @@ export function isSlotComplete(slot: {
     (o) => !o || typeof o !== "object" || !("optionText" in o) || !String(o.optionText).trim(),
   );
   if (hasEmptyOption) return false;
+  const optionTexts = options.map((o) =>
+    o && typeof o === "object" && "optionText" in o ? String(o.optionText).trim() : "",
+  );
+  if (new Set(optionTexts).size !== optionTexts.length) return false;
   const correctExists = options.some(
     (o) => o && typeof o === "object" && "tempId" in o && o.tempId === slot.correct_option_temp_id,
   );

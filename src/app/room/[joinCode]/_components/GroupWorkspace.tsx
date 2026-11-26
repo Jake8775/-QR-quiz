@@ -8,6 +8,7 @@ import { SlotEditorWrapper, type SlotData } from "./SlotEditorWrapper";
 
 type WorkspaceResponse = {
   runStatus: string;
+  topic: string | null;
   group: { id: string; name: string; status: "DRAFTING" | "SUBMITTED" | "CONFIRMED" };
   rejectionComment: string | null;
   slots: SlotData[];
@@ -114,6 +115,9 @@ export function GroupWorkspace({ joinCode }: { joinCode: string }) {
     <div className="relative flex flex-1 flex-col overflow-hidden bg-zinc-50 px-4 py-8">
       <SafetyBackdrop />
       <div className="relative mx-auto flex w-full max-w-xl flex-col gap-4">
+        {data.topic && (
+          <p className="text-xl font-bold text-zinc-900 sm:text-2xl">{data.topic}</p>
+        )}
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-zinc-900">
             {data.group.name} 문제 작성

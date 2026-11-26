@@ -48,6 +48,8 @@ type RunStatusResponse = {
   authoringGroup?: { name: string; members: string[] };
   nextAuthoringGroup?: { name: string; members: string[] };
   groupScores?: GroupScoreRow[];
+  activeParticipantCount?: number;
+  spectatorCount?: number;
 };
 
 type GroupScoreRow = {
@@ -194,7 +196,7 @@ export function LobbyClient({
         )}
 
         <div className="mx-auto mb-6 flex flex-col items-center gap-2">
-          <p className="text-lg text-zinc-500">{quizTitle}</p>
+          <p className="text-2xl font-semibold text-zinc-900">{quizTitle}</p>
           <JoinQr joinUrl={joinUrl} />
         </div>
 
@@ -292,7 +294,7 @@ export function LobbyClient({
           closesAt={data.question.closesAt ?? null}
           timeLimitSeconds={data.question.timeLimitSeconds ?? null}
           submittedCount={data.submittedCount ?? 0}
-          totalParticipants={data.count}
+          totalParticipants={data.activeParticipantCount ?? data.count}
           correctCount={data.correctCount}
           currentQuestionIndex={data.currentQuestionIndex}
           totalQuestions={data.totalQuestions}
@@ -302,6 +304,7 @@ export function LobbyClient({
           onShowRanking={() => callAction("show-ranking")}
           submitting={submitting}
           authoringGroup={data.authoringGroup}
+          spectatorCount={data.spectatorCount}
         />
       </div>
     );
@@ -313,7 +316,7 @@ export function LobbyClient({
         )}
         <LeaderboardDashboard
           correctCount={data.correctCount ?? 0}
-          totalParticipants={data.count}
+          totalParticipants={data.activeParticipantCount ?? data.count}
           leaderboard={data.leaderboard ?? []}
           isLastQuestion={
             data.currentQuestionIndex >= data.totalQuestions - 1
@@ -322,6 +325,7 @@ export function LobbyClient({
           submitting={submitting}
           nextAuthoringGroup={data.nextAuthoringGroup}
           groupScores={data.groupScores}
+          spectatorCount={data.spectatorCount}
         />
       </div>
     );
