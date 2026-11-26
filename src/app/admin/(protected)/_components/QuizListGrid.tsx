@@ -8,11 +8,21 @@ import { deleteQuizzesAction } from "../quizzes/actions";
 import { QuizListActions } from "./QuizListActions";
 import { GroupModeQuizRowActions } from "./GroupModeQuizRowActions";
 
-const MODE_COLUMNS: { mode: QuizMode; title: string }[] = [
+const MODE_SECTIONS: { mode: QuizMode; title: string }[] = [
   { mode: "NORMAL", title: "개인전" },
   { mode: "TEAM", title: "팀전" },
   { mode: "SOLO", title: "개인별 출제전" },
   { mode: "GROUP", title: "조별 출제전" },
+];
+
+// Two page-level columns, each holding two mode sections stacked: 개인전
+// + 팀전 (presenter-authored content) on the left, 개인별 출제전 + 조별
+// 출제전 (participant-authored content) on the right -- these two pairs
+// read as related to each other, so grouping them this way is more
+// legible than 4 same-width columns side by side.
+const LAYOUT_COLUMNS: QuizMode[][] = [
+  ["NORMAL", "TEAM"],
+  ["SOLO", "GROUP"],
 ];
 
 const BADGE_CLASS: Record<QuizMode, string> = {
@@ -33,26 +43,34 @@ const BADGE_LABEL: Record<QuizMode, string> = {
   GROUP: "조별\n출제전",
 };
 
-// Four independent columns, one per quiz mode -- each has its own
-// checkbox selection and "선택 삭제" button so selecting quizzes in one
-// mode's column never interacts with another's. Deletion here is a
-// forced delete (see deleteQuizzesAction): any rooms the selected
-// quizzes have, and all their game history, are destroyed along with
-// the quiz, so a warning is added to the confirm prompt whenever the
-// selection includes a quiz with room activity.
+// Two page-level columns (presenter-authored vs participant-authored
+// modes, see LAYOUT_COLUMNS), each stacking two mode sections. Every
+// section has its own checkbox selection and "선택 삭제" button so
+// selecting quizzes in one mode never interacts with another's.
+// Deletion here is a forced delete (see deleteQuizzesAction): any rooms
+// the selected quizzes have, and all their game history, are destroyed
+// along with the quiz, so a warning is added to the confirm prompt
+// whenever the selection includes a quiz with room activity.
 export function QuizListGrid({ quizzes }: { quizzes: QuizListItem[] }) {
   const router = useRouter();
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-      {MODE_COLUMNS.map((col) => (
-        <ModeColumn
-          key={col.mode}
-          mode={col.mode}
-          title={col.title}
-          quizzes={quizzes.filter((q) => q.mode === col.mode)}
-          onDeleted={() => router.refresh()}
-        />
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+      {LAYOUT_COLUMNS.map((modes, i) => (
+        <div key={i} className="flex flex-col gap-6">
+          {modes.map((mode) => {
+            const section = MODE_SECTIONS.find((s) => s.mode === mode)!;
+            return (
+              <ModeColumn
+                key={mode}
+                mode={section.mode}
+                title={section.title}
+                quizzes={quizzes.filter((q) => q.mode === mode)}
+                onDeleted={() => router.refresh()}
+              />
+            );
+          })}
+        </div>
       ))}
     </div>
   );
@@ -154,7 +172,7 @@ function ModeColumn({
                   type="checkbox"
                   checked={selected.has(quiz.id)}
                   onChange={() => toggle(quiz.id)}
-                  className="mt-1 h-3.5 w-3.5 shrink-0"
+                  className="mt-0.5 h-3.5 w-3.5 shrink-0"
                 />
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-zinc-900">{quiz.title}</p>
