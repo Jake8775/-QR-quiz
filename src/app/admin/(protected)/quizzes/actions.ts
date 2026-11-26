@@ -146,19 +146,31 @@ export async function saveQuizAction(
   return { success: true, quizId };
 }
 
+// rooms.quiz_id is `on delete restrict`, so a quiz with any room would
+// otherwise block deletion at the DB level. This is a deliberate forced
+// delete: every room pointing at this quiz (and everything cascading
+// from it -- quiz_runs, participants, answers, groups, etc.) is deleted
+// first, THEN the quiz itself. The caller is responsible for warning the
+// user that this permanently destroys game history before calling this.
 export async function deleteQuizAction(
   quizId: string,
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
-  if (!userData.user) {
+  const user = userData.user;
+  if (!user) {
     return { success: false, error: "로그인이 필요합니다" };
   }
 
-  // NOTE(stage-3): rooms.quiz_id is `on delete restrict`, so once rooms
-  // exist, deleting a quiz with any room will raise a DB FK-violation
-  // error here. Catch that specific error then and surface
-  // "이 퀴즈는 방이 생성되어 삭제할 수 없습니다" instead of a raw DB error.
+  const { error: roomsError } = await supabase
+    .from("rooms")
+    .delete()
+    .eq("quiz_id", quizId)
+    .eq("owner_id", user.id);
+  if (roomsError) {
+    return { success: false, error: "방 삭제에 실패했습니다" };
+  }
+
   const { error } = await supabase.from("quizzes").delete().eq("id", quizId);
   if (error) {
     return { success: false, error: "삭제에 실패했습니다" };
@@ -166,6 +178,43 @@ export async function deleteQuizAction(
 
   revalidatePath("/admin");
   return { success: true };
+}
+
+// Batch version of deleteQuizAction, for the list's multi-select delete.
+export async function deleteQuizzesAction(
+  quizIds: string[],
+): Promise<ActionResult<{ deletedCount: number }>> {
+  const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
+  if (!user) {
+    return { success: false, error: "로그인이 필요합니다" };
+  }
+  if (quizIds.length === 0) {
+    return { success: true, deletedCount: 0 };
+  }
+
+  const { error: roomsError } = await supabase
+    .from("rooms")
+    .delete()
+    .in("quiz_id", quizIds)
+    .eq("owner_id", user.id);
+  if (roomsError) {
+    return { success: false, error: "방 삭제에 실패했습니다" };
+  }
+
+  const { data: deleted, error } = await supabase
+    .from("quizzes")
+    .delete()
+    .in("id", quizIds)
+    .eq("owner_id", user.id)
+    .select("id");
+  if (error) {
+    return { success: false, error: "삭제에 실패했습니다" };
+  }
+
+  revalidatePath("/admin");
+  return { success: true, deletedCount: deleted?.length ?? 0 };
 }
 
 export async function duplicateQuizAction(

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { QuizListActions } from "./_components/QuizListActions";
-import { GroupModeQuizRowActions } from "./_components/GroupModeQuizRowActions";
+import { loadQuizListForOwner } from "./queries";
+import { QuizListGrid } from "./_components/QuizListGrid";
 import { SafetyBackdrop } from "@/components/SafetyBackdrop";
 
 async function logout() {
@@ -16,16 +16,12 @@ export default async function AdminHomePage() {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
 
-  const { data: quizzes } = await supabase
-    .from("quizzes")
-    .select("id, title, mode, created_at, updated_at, questions(count), rooms(id)")
-    .eq("owner_id", userData.user!.id)
-    .order("updated_at", { ascending: false });
+  const quizzes = await loadQuizListForOwner();
 
   return (
     <div className="relative min-h-screen overflow-hidden">
       <SafetyBackdrop />
-      <div className="relative mx-auto max-w-4xl px-4 py-8">
+      <div className="relative mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <p className="text-sm text-zinc-500">로그인됨</p>
@@ -73,57 +69,7 @@ export default async function AdminHomePage() {
         </div>
       </div>
 
-      {!quizzes || quizzes.length === 0 ? (
-        <p className="text-sm text-zinc-500">아직 만든 퀴즈가 없습니다.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {quizzes.map((quiz) => {
-            const roomId = Array.isArray(quiz.rooms) ? quiz.rooms[0]?.id : undefined;
-            return (
-              <div
-                key={quiz.id}
-                className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-zinc-900">{quiz.title}</p>
-                    {quiz.mode === "NORMAL" && (
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-                        개인전
-                      </span>
-                    )}
-                    {quiz.mode === "GROUP" && (
-                      <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                        조별 출제전
-                      </span>
-                    )}
-                    {quiz.mode === "TEAM" && (
-                      <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
-                        팀전
-                      </span>
-                    )}
-                    {quiz.mode === "SOLO" && (
-                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        개인별 출제전
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-zinc-500">
-                    {quiz.mode === "GROUP" || quiz.mode === "SOLO"
-                      ? "참가자 작성 문제"
-                      : `문제 ${quiz.questions?.[0]?.count ?? 0}개`}
-                  </p>
-                </div>
-                {quiz.mode === "GROUP" || quiz.mode === "SOLO" ? (
-                  <GroupModeQuizRowActions quizId={quiz.id} roomId={roomId} />
-                ) : (
-                  <QuizListActions quizId={quiz.id} mode={quiz.mode} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <QuizListGrid quizzes={quizzes} />
       </div>
     </div>
   );

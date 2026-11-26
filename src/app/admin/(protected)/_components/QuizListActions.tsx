@@ -4,14 +4,17 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { QuizMode } from "@/types/database.types";
+import type { RoomSummary } from "../queries";
 import { deleteQuizAction, duplicateQuizAction } from "../quizzes/actions";
 import { createRoomAction } from "../rooms/actions";
 import { createTeamRoomAction } from "../rooms/team-actions";
 import { TeamGroupCountModal } from "./TeamGroupCountModal";
+import { RoomListForQuiz } from "./RoomListForQuiz";
 
 export function QuizListActions({
   quizId,
   mode = "NORMAL",
+  rooms = [],
 }: {
   quizId: string;
   // NORMAL creates a room immediately with no extra input. TEAM needs a
@@ -19,6 +22,12 @@ export function QuizListActions({
   // 삭제) is identical between the two since both author questions
   // through the same QuizEditor/saveQuizAction pipeline.
   mode?: QuizMode;
+  // This quiz's rooms (there can be more than one -- NORMAL/TEAM quizzes
+  // are reusable across rooms). deleteQuizAction force-deletes all of
+  // them along with the quiz, so the confirm prompt warns if any carry
+  // game history, and RoomListForQuiz lets the presenter inspect/delete
+  // them individually without touching the quiz itself.
+  rooms?: RoomSummary[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -35,7 +44,11 @@ export function QuizListActions({
 
   async function handleDelete() {
     if (busy) return;
-    if (!confirm("이 퀴즈를 삭제하시겠습니까?")) return;
+    const hasRoomActivity = rooms.some((r) => r.hasActivity);
+    const warning = hasRoomActivity
+      ? "⚠️ 이 퀴즈의 방에는 게임 기록(참가자/점수)이 있습니다. 삭제하면 기록이 복구 불가능하게 사라집니다.\n\n"
+      : "";
+    if (!confirm(`${warning}이 퀴즈를 삭제하시겠습니까?`)) return;
     setBusy(true);
     await deleteQuizAction(quizId);
     setBusy(false);
@@ -108,6 +121,7 @@ export function QuizListActions({
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
+      <RoomListForQuiz rooms={rooms} />
       {showTeamModal && (
         <TeamGroupCountModal
           submitting={busy}
