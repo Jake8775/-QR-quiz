@@ -181,11 +181,13 @@ test.describe("normal mode core flow (regression)", () => {
     await presenter.waitForTimeout(2000);
     await presenter.getByRole("button", { name: "퀴즈 시작" }).click();
 
-    // Let the 5s deadline pass without submitting.
-    await presenter.waitForTimeout(6500);
-    await presenter.getByRole("button", { name: "결과 보기" }).click();
+    // QuestionDashboard auto-reveals once the countdown hits 0 (see
+    // autoRevealedRef in QuestionDashboard.tsx) -- the 5s deadline passes
+    // without submitting and the screen transitions on its own, so wait
+    // for that result screen directly instead of a manual "결과 보기"
+    // click, which may no longer be there by the time this runs.
     await expect(presenter.getByText(/정답자 0 \/ 1명/)).toBeVisible({
-      timeout: ASSERT_TIMEOUT,
+      timeout: ASSERT_TIMEOUT + 6500,
     });
 
     await p1.waitForTimeout(1000);

@@ -4,10 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quizEditorSchema, type QuizEditorInput } from "@/lib/validation/quiz";
-
-type ActionResult<T = undefined> =
-  | ({ success: true } & (T extends undefined ? object : T))
-  | { success: false; error: string };
+import type { ActionResult } from "../rooms/room-creation";
 
 export async function saveQuizAction(
   input: QuizEditorInput,

@@ -3,11 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { generateJoinCode } from "@/lib/joinCode";
-
-type ActionResult<T = undefined> =
-  | ({ success: true } & (T extends undefined ? object : T))
-  | { success: false; error: string };
+import { createRoomAndRun, type ActionResult } from "./room-creation";
 
 export async function createRoomAction(
   quizId: string,
@@ -76,43 +72,11 @@ export async function createRoomAction(
     };
   }
 
-  let joinCode = "";
-  let room: { id: string } | null = null;
-  for (let attempt = 0; attempt < 5; attempt++) {
-    joinCode = generateJoinCode();
-    const { data: insertedRoom, error } = await supabase
-      .from("rooms")
-      .insert({ owner_id: user.id, quiz_id: quizId, public_join_code: joinCode })
-      .select("id")
-      .single();
-    if (!error && insertedRoom) {
-      room = insertedRoom;
-      break;
-    }
-    if (error && error.code !== "23505") {
-      return { success: false, error: "방 생성에 실패했습니다" };
-    }
+  const created = await createRoomAndRun(supabase, { ownerId: user.id, quizId });
+  if ("error" in created) {
+    return { success: false, error: created.error };
   }
-  if (!room) {
-    return { success: false, error: "방 코드 생성에 실패했습니다. 다시 시도해주세요" };
-  }
-
-  const { data: run, error: runError } = await supabase
-    .from("quiz_runs")
-    .insert({ room_id: room.id, run_number: 1, status: "LOBBY" })
-    .select("id")
-    .single();
-  if (runError || !run) {
-    return { success: false, error: "회차 생성에 실패했습니다" };
-  }
-
-  const { error: updateRoomError } = await supabase
-    .from("rooms")
-    .update({ active_run_id: run.id })
-    .eq("id", room.id);
-  if (updateRoomError) {
-    return { success: false, error: "방 활성 회차 설정에 실패했습니다" };
-  }
+  const { room, run } = created;
 
   // Snapshot copy, mirroring duplicateQuizAction's id-remapping shape.
   // run_questions/run_options only have owner-SELECT RLS policies (not
