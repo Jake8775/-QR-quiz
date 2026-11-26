@@ -53,7 +53,7 @@ export default async function AdminHomePage() {
             개인전
           </Link>
           <Link
-            href="/admin/rooms/new-team"
+            href="/admin/quizzes/new-team"
             className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
           >
             팀전
@@ -87,6 +87,11 @@ export default async function AdminHomePage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-zinc-900">{quiz.title}</p>
+                    {quiz.mode === "NORMAL" && (
+                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
+                        개인전
+                      </span>
+                    )}
                     {quiz.mode === "GROUP" && (
                       <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
                         조별 출제전
@@ -109,10 +114,10 @@ export default async function AdminHomePage() {
                       : `문제 ${quiz.questions?.[0]?.count ?? 0}개`}
                   </p>
                 </div>
-                {quiz.mode === "GROUP" || quiz.mode === "TEAM" || quiz.mode === "SOLO" ? (
+                {quiz.mode === "GROUP" || quiz.mode === "SOLO" ? (
                   <GroupModeQuizRowActions quizId={quiz.id} roomId={roomId} />
                 ) : (
-                  <QuizListActions quizId={quiz.id} />
+                  <QuizListActions quizId={quiz.id} mode={quiz.mode} />
                 )}
               </div>
             );

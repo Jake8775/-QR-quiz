@@ -18,19 +18,19 @@ async function login(page: Page) {
   await page.waitForURL("**/admin");
 }
 
-// TEAM mode's setup screen is QuizEditor-shaped (title + questions) plus
-// one groupCount field -- the presenter authors questions directly, so
-// unlike GROUP mode's setup there's no questionsPerGroup/timeLimitSeconds
-// knob (each question carries its own time limit, like NORMAL mode).
-async function createTeamRoom(
+// TEAM mode's quiz-authoring screen is now exactly QuizEditor (title +
+// questions, same as NORMAL mode's /admin/quizzes/new) -- team count is
+// no longer part of quiz authoring, it's collected separately at room-
+// creation time (see createTeamRoomFromList below) so the same TEAM
+// quiz can be reused across multiple rooms with a different team count
+// each time.
+async function createTeamQuiz(
   presenter: Page,
   title: string,
-  groupCount: number,
   questions: { text: string; correct: string; wrong: string }[],
 ) {
-  await presenter.goto("/admin/rooms/new-team");
+  await presenter.goto("/admin/quizzes/new-team");
   await presenter.fill('input[placeholder="퀴즈 제목"]', title);
-  await presenter.locator('input[type="number"]').first().fill(String(groupCount));
 
   for (let i = 0; i < questions.length; i++) {
     if (i > 0) {
@@ -47,7 +47,26 @@ async function createTeamRoom(
     await card.getByLabel("정답으로 지정").first().check();
   }
 
-  await presenter.getByRole("button", { name: "방 생성" }).click();
+  await presenter.getByRole("button", { name: "저장" }).click();
+  await presenter.waitForURL("**/admin");
+}
+
+// Drives the /admin list row's "방 만들기" -> TeamGroupCountModal flow
+// for a given quiz title, exactly like a presenter reusing a saved TEAM
+// quiz would.
+async function createTeamRoomFromList(
+  presenter: Page,
+  title: string,
+  groupCount: number,
+) {
+  const row = presenter
+    .locator("div")
+    .filter({ hasText: title })
+    .filter({ hasText: "방 만들기" })
+    .last();
+  await row.getByText("방 만들기").click();
+  await presenter.locator('input[type="number"]').fill(String(groupCount));
+  await presenter.getByRole("button", { name: "방 생성", exact: true }).click();
   await presenter.waitForURL(/\/admin\/rooms\/[0-9a-f-]+$/, { timeout: ASSERT_TIMEOUT });
   const roomUrl = presenter.url();
   await expect(presenter.getByText(/참가자 \d+명/)).toBeVisible({ timeout: ASSERT_TIMEOUT });
@@ -91,14 +110,16 @@ test.describe("team mode (팀전)", () => {
     const presenter = await browser.newPage();
     await login(presenter);
 
-    const { roomUrl, joinUrl, groups, allConfirmed } = await createTeamRoom(
+    const title = `팀전-${Date.now()}`;
+    await createTeamQuiz(presenter, title, [
+      { text: "팀전 문제1", correct: "정답1", wrong: "오답1" },
+      { text: "팀전 문제2", correct: "정답2", wrong: "오답2" },
+    ]);
+
+    const { roomUrl, joinUrl, groups, allConfirmed } = await createTeamRoomFromList(
       presenter,
-      `팀전-${Date.now()}`,
+      title,
       3,
-      [
-        { text: "팀전 문제1", correct: "정답1", wrong: "오답1" },
-        { text: "팀전 문제2", correct: "정답2", wrong: "오답2" },
-      ],
     );
     const [g1, g2] = groups;
 
@@ -193,6 +214,15 @@ test.describe("team mode (팀전)", () => {
 
     await p1.close();
     await p2.close();
+
+    // --- Reuse: the same saved TEAM quiz can be used to create a
+    // second room with a different team count, without re-entering any
+    // question content -- this is the whole point of splitting quiz
+    // authoring from room creation. ---
+    await presenter.goto("/admin");
+    const { groups: groups2 } = await createTeamRoomFromList(presenter, title, 5);
+    expect(groups2).toHaveLength(5);
+
     await presenter.close();
   });
 });

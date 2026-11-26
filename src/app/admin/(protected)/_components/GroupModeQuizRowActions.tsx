@@ -5,12 +5,16 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { deleteQuizAction } from "../quizzes/actions";
 
-// Shared row actions for every "room already exists at creation time"
-// mode (GROUP, TEAM, SOLO) -- none of them have a standalone quiz-editor
-// screen to route 수정/복제/방 만들기 to, so only "방 보기"/"삭제" make
-// sense. 삭제 reuses the existing deleteQuizAction unmodified; its FK
-// (rooms.quiz_id on delete restrict) already protects against deleting a
-// quiz with a live room the same way it does for normal mode.
+// Shared row actions for GROUP/SOLO -- both create their room+content
+// together at room-creation time (members author questions after
+// joining), so there is no standalone quiz-editor screen to route
+// 수정/복제/방 만들기 to, only "방 보기"/"삭제" make sense. TEAM mode no
+// longer uses this component -- it authors questions through the same
+// QuizEditor/saveQuizAction pipeline as NORMAL, so it reuses
+// QuizListActions instead (see page.tsx). 삭제 reuses the existing
+// deleteQuizAction unmodified; its FK (rooms.quiz_id on delete restrict)
+// already protects against deleting a quiz with a live room the same
+// way it does for normal mode.
 export function GroupModeQuizRowActions({
   quizId,
   roomId,

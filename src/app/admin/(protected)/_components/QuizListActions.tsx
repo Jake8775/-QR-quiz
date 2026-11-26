@@ -3,13 +3,27 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import type { QuizMode } from "@/types/database.types";
 import { deleteQuizAction, duplicateQuizAction } from "../quizzes/actions";
 import { createRoomAction } from "../rooms/actions";
+import { createTeamRoomAction } from "../rooms/team-actions";
+import { TeamGroupCountModal } from "./TeamGroupCountModal";
 
-export function QuizListActions({ quizId }: { quizId: string }) {
+export function QuizListActions({
+  quizId,
+  mode = "NORMAL",
+}: {
+  quizId: string;
+  // NORMAL creates a room immediately with no extra input. TEAM needs a
+  // team count first (see TeamGroupCountModal) -- the rest (수정/복제/
+  // 삭제) is identical between the two since both author questions
+  // through the same QuizEditor/saveQuizAction pipeline.
+  mode?: QuizMode;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showTeamModal, setShowTeamModal] = useState(false);
 
   async function handleDuplicate() {
     if (busy) return;
@@ -30,6 +44,10 @@ export function QuizListActions({ quizId }: { quizId: string }) {
 
   async function handleCreateRoom() {
     if (busy) return;
+    if (mode === "TEAM") {
+      setShowTeamModal(true);
+      return;
+    }
     setBusy(true);
     setError(null);
     const result = await createRoomAction(quizId);
@@ -38,6 +56,20 @@ export function QuizListActions({ quizId }: { quizId: string }) {
       setError(result.error);
       return;
     }
+    router.push(`/admin/rooms/${result.roomId}`);
+  }
+
+  async function handleCreateTeamRoom(groupCount: number) {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    const result = await createTeamRoomAction({ quizId, groupCount });
+    setBusy(false);
+    if (!result.success) {
+      setError(result.error);
+      return;
+    }
+    setShowTeamModal(false);
     router.push(`/admin/rooms/${result.roomId}`);
   }
 
@@ -76,6 +108,13 @@ export function QuizListActions({ quizId }: { quizId: string }) {
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
+      {showTeamModal && (
+        <TeamGroupCountModal
+          submitting={busy}
+          onClose={() => setShowTeamModal(false)}
+          onConfirm={handleCreateTeamRoom}
+        />
+      )}
     </div>
   );
 }

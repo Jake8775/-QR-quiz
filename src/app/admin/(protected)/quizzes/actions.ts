@@ -4,10 +4,17 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quizEditorSchema, type QuizEditorInput } from "@/lib/validation/quiz";
+import type { QuizMode } from "@/types/database.types";
 import type { ActionResult } from "../rooms/room-creation";
 
+// `mode` only matters on creation (data.quizId === null) -- TEAM mode
+// reuses this exact function (and QuizEditor.tsx) to author its
+// questions, just like NORMAL, so the presenter-authored quiz content
+// pipeline stays shared between the two. Editing an existing quiz never
+// changes its mode, so the update branch below doesn't take this param.
 export async function saveQuizAction(
   input: QuizEditorInput,
+  mode: QuizMode = "NORMAL",
 ): Promise<ActionResult<{ quizId: string }>> {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
@@ -26,7 +33,7 @@ export async function saveQuizAction(
   if (data.quizId === null) {
     const { data: inserted, error } = await supabase
       .from("quizzes")
-      .insert({ owner_id: user.id, title: data.title })
+      .insert({ owner_id: user.id, title: data.title, mode })
       .select("id")
       .single();
     if (error || !inserted) {
@@ -173,7 +180,7 @@ export async function duplicateQuizAction(
 
   const { data: original } = await supabase
     .from("quizzes")
-    .select("id, title")
+    .select("id, title, mode")
     .eq("id", quizId)
     .maybeSingle();
   if (!original) {
@@ -214,7 +221,7 @@ export async function duplicateQuizAction(
 
   const { data: newQuiz, error: insertQuizError } = await supabase
     .from("quizzes")
-    .insert({ owner_id: user.id, title: `${original.title} (복제)` })
+    .insert({ owner_id: user.id, title: `${original.title} (복제)`, mode: original.mode })
     .select("id")
     .single();
   if (insertQuizError || !newQuiz) {

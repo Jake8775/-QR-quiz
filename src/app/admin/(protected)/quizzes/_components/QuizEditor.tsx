@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { quizEditorSchema, type QuizEditorInput, type QuestionDraft } from "@/lib/validation/quiz";
+import type { QuizMode } from "@/types/database.types";
 import { saveQuizAction } from "../actions";
 import { QuestionCard } from "./QuestionCard";
 import { PreviewModal } from "./PreviewModal";
@@ -41,8 +42,15 @@ function initialBlankQuestion(): QuestionDraft {
 
 export function QuizEditor({
   initialData,
+  mode = "NORMAL",
 }: {
   initialData: QuizEditorInput | null;
+  // TEAM mode reuses this exact editor to author its questions (same
+  // QuestionCard/questionDraftSchema pipeline as NORMAL) -- only the
+  // heading text and saveQuizAction's mode param differ. Editing an
+  // existing quiz ignores this (saveQuizAction never changes an
+  // existing quiz's mode), so it only matters for a brand-new quiz.
+  mode?: QuizMode;
 }) {
   const router = useRouter();
   const [quizId] = useState<string | null>(initialData?.quizId ?? null);
@@ -84,7 +92,7 @@ export function QuizEditor({
     }
 
     setSaving(true);
-    const result = await saveQuizAction(input);
+    const result = await saveQuizAction(input, mode);
     setSaving(false);
 
     if (!result.success) {
@@ -96,6 +104,9 @@ export function QuizEditor({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
+      {mode === "TEAM" && (
+        <h1 className="mb-4 text-lg font-semibold text-zinc-900">팀전 문제 작성</h1>
+      )}
       <input
         type="text"
         value={title}
