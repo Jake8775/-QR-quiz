@@ -107,14 +107,24 @@ export async function GET(
   // given run, so querying both and taking whichever resolves is safe
   // without knowing quizzes.mode here.
   const [{ data: groupSettings }, { data: soloSettings }] = await Promise.all([
-    admin.from("group_mode_settings").select("topic").eq("run_id", run.id).maybeSingle(),
-    admin.from("solo_mode_settings").select("topic").eq("run_id", run.id).maybeSingle(),
+    admin
+      .from("group_mode_settings")
+      .select("topic, options_count")
+      .eq("run_id", run.id)
+      .maybeSingle(),
+    admin
+      .from("solo_mode_settings")
+      .select("topic, options_count")
+      .eq("run_id", run.id)
+      .maybeSingle(),
   ]);
   const topic = groupSettings?.topic ?? soloSettings?.topic ?? null;
+  const optionsCount = groupSettings?.options_count ?? soloSettings?.options_count ?? 4;
 
   return NextResponse.json({
     runStatus: run.status,
     topic,
+    optionsCount,
     group: { id: group.id, name: group.name, status: group.status },
     rejectionComment:
       group.status === "DRAFTING" && latestHistory?.to_status === "DRAFTING"

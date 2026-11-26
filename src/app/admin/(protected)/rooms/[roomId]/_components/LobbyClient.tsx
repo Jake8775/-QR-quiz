@@ -86,6 +86,7 @@ type GroupData = {
 type GroupsResponse = {
   groups: GroupData[];
   allConfirmed: boolean;
+  settings: { optionsCount: number } | null;
 };
 
 export function LobbyClient({
@@ -212,6 +213,7 @@ export function LobbyClient({
             startDisabled={!groupsData.allConfirmed}
             startSubmitting={submitting}
             hideGroupMechanics={data.mode === "SOLO"}
+            optionsCount={groupsData.settings?.optionsCount ?? 4}
           />
         )}
       </div>

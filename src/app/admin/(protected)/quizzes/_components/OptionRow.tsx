@@ -10,6 +10,7 @@ export function OptionRow({
   onChangeText,
   onSetCorrect,
   onDelete,
+  disabled = false,
 }: {
   option: OptionDraft;
   questionTempId: string;
@@ -18,6 +19,7 @@ export function OptionRow({
   onChangeText: (text: string) => void;
   onSetCorrect: () => void;
   onDelete: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center gap-2">
@@ -26,6 +28,7 @@ export function OptionRow({
         name={`correct-${questionTempId}`}
         checked={isCorrect}
         onChange={onSetCorrect}
+        disabled={disabled}
         aria-label="정답으로 지정"
         className="h-4 w-4"
       />
@@ -33,17 +36,20 @@ export function OptionRow({
         type="text"
         value={option.optionText}
         onChange={(e) => onChangeText(e.target.value)}
+        disabled={disabled}
         placeholder="보기 내용"
-        className="flex-1 rounded-md border border-zinc-300 px-2 py-1.5 text-sm outline-none focus:border-zinc-500"
+        className="flex-1 rounded-md border border-zinc-300 px-2 py-1.5 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100 disabled:text-zinc-500"
       />
-      <button
-        type="button"
-        onClick={onDelete}
-        disabled={!canDelete}
-        className="px-2 py-1 text-xs text-zinc-500 hover:text-red-600 disabled:opacity-30"
-      >
-        삭제
-      </button>
+      {!disabled && (
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={!canDelete}
+          className="px-2 py-1 text-xs text-zinc-500 hover:text-red-600 disabled:opacity-30"
+        >
+          삭제
+        </button>
+      )}
     </div>
   );
 }

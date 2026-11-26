@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { questionDraftSchema } from "@/lib/validation/quiz";
 import { draftToSlotPayload } from "@/lib/groupMode/slotDraft";
+import { getOptionsCountForRun } from "@/lib/groupMode/settings";
 
 const PARTICIPANT_COOKIE = "qz_participant";
 
@@ -44,6 +45,18 @@ export async function POST(
     .maybeSingle();
   if (!room || !room.active_run_id) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
+  // Defensive server-side enforcement -- the client hides the add/
+  // remove-option controls (QuestionCard's lockOptionCount), but a
+  // direct API call must not be able to bypass the presenter-fixed
+  // option count.
+  const optionsCount = await getOptionsCountForRun(admin, room.active_run_id);
+  if (optionsCount !== null && draft.options.length !== optionsCount) {
+    return NextResponse.json(
+      { error: `보기는 정확히 ${optionsCount}개여야 합니다` },
+      { status: 400 },
+    );
   }
 
   const { data: participant } = await admin

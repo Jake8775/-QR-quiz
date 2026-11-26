@@ -24,6 +24,11 @@ async function createGroupRoom(
   groupCount: number,
   questionsPerGroup: number,
   timeLimitSeconds: number,
+  // Matches fillAndSaveSlot's 2-option pattern below -- the presenter-fixed
+  // options_count setting (added for cross-author fairness) defaults the
+  // form to 4, so every test room must explicitly pin it to 2 to keep
+  // filling exactly 2 option inputs per slot valid.
+  optionsCount = 2,
 ) {
   await presenter.goto("/admin/rooms/new-group");
   await presenter.fill('input[type="text"]', title);
@@ -31,6 +36,7 @@ async function createGroupRoom(
   await numberInputs.nth(0).fill(String(groupCount));
   await numberInputs.nth(1).fill(String(questionsPerGroup));
   await numberInputs.nth(2).fill(String(timeLimitSeconds));
+  await numberInputs.nth(3).fill(String(optionsCount));
   await presenter.getByRole("button", { name: "방 생성" }).click();
   await presenter.waitForURL(/\/admin\/rooms\/[0-9a-f-]+$/, { timeout: ASSERT_TIMEOUT });
   const roomUrl = presenter.url();

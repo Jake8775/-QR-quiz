@@ -27,7 +27,7 @@ export async function createSoloModeRoomAction(
       error: parsed.error.issues[0]?.message ?? "입력값이 올바르지 않습니다",
     };
   }
-  const { topic, questionsPerPerson, timeLimitSeconds } = parsed.data;
+  const { topic, questionsPerPerson, timeLimitSeconds, optionsCount } = parsed.data;
 
   const { data: quiz, error: quizError } = await supabase
     .from("quizzes")
@@ -49,6 +49,7 @@ export async function createSoloModeRoomAction(
     topic,
     questions_per_person: questionsPerPerson,
     time_limit_seconds: timeLimitSeconds,
+    options_count: optionsCount,
   });
   if (settingsError) {
     return { success: false, error: "개인별 출제전 설정 저장에 실패했습니다" };

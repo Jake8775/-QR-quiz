@@ -16,6 +16,11 @@ export const soloModeSetupSchema = z.object({
     .int()
     .min(5, "5초 이상이어야 합니다")
     .max(300, "300초 이하여야 합니다"),
+  optionsCount: z
+    .number()
+    .int()
+    .min(2, "보기 개수는 2개 이상이어야 합니다")
+    .max(6, "보기 개수는 6개 이하여야 합니다"),
 });
 
 export type SoloModeSetupInput = z.infer<typeof soloModeSetupSchema>;

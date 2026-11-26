@@ -13,6 +13,8 @@ export function QuestionCard({
   onMoveDown,
   hideTimeLimit = false,
   hideReorderControls = false,
+  disabled = false,
+  lockOptionCount = false,
 }: {
   question: QuestionDraft;
   index: number;
@@ -27,6 +29,16 @@ export function QuestionCard({
   // default to false so normal mode's render is byte-identical.
   hideTimeLimit?: boolean;
   hideReorderControls?: boolean;
+  // Group/solo slot editing after submission/confirmation: inputs must
+  // look and behave as truly read-only (not just dimmed), so participants
+  // don't mistake a submitted question for one they can still edit.
+  disabled?: boolean;
+  // GROUP/SOLO fairness: the presenter fixes the option count for the
+  // whole run (group_mode_settings.options_count / solo_mode_settings.
+  // options_count) so every author's question has the same number of
+  // choices. Hides "보기 추가" and each option's "삭제" button -- the
+  // option TEXT remains editable (independent of `disabled`).
+  lockOptionCount?: boolean;
 }) {
   function addOption() {
     if (question.options.length >= 6) return;
@@ -101,8 +113,9 @@ export function QuestionCard({
         onChange={(e) =>
           onChange({ ...question, questionText: e.target.value })
         }
+        disabled={disabled}
         placeholder="질문을 입력하세요"
-        className="mb-3 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500"
+        className="mb-3 w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100 disabled:text-zinc-500"
       />
 
       {!hideTimeLimit && (
@@ -119,7 +132,8 @@ export function QuestionCard({
                 timeLimitSeconds: Number(e.target.value),
               })
             }
-            className="w-20 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500"
+            disabled={disabled}
+            className="w-20 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100 disabled:text-zinc-500"
           />
         </div>
       )}
@@ -131,24 +145,27 @@ export function QuestionCard({
             option={o}
             questionTempId={question.tempId}
             isCorrect={question.correctOptionTempId === o.tempId}
-            canDelete={question.options.length > 2}
+            canDelete={question.options.length > 2 && !lockOptionCount}
             onChangeText={(text) => updateOptionText(o.tempId, text)}
             onSetCorrect={() =>
               onChange({ ...question, correctOptionTempId: o.tempId })
             }
             onDelete={() => deleteOption(o.tempId)}
+            disabled={disabled}
           />
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={addOption}
-        disabled={question.options.length >= 6}
-        className="mt-2 text-sm text-zinc-600 underline disabled:opacity-30"
-      >
-        보기 추가
-      </button>
+      {!disabled && !lockOptionCount && (
+        <button
+          type="button"
+          onClick={addOption}
+          disabled={question.options.length >= 6}
+          className="mt-2 text-sm text-zinc-600 underline disabled:opacity-30"
+        >
+          보기 추가
+        </button>
+      )}
     </div>
   );
 }

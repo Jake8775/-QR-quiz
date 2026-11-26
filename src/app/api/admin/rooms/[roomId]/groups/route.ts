@@ -47,11 +47,18 @@ export async function GET(
   const admin = createAdminClient();
 
   // settings and groups both only depend on run.id -- independent reads,
-  // fired together instead of one-after-another.
-  const [{ data: settings }, { data: groups }] = await Promise.all([
+  // fired together instead of one-after-another. This dashboard is
+  // shared by GROUP and SOLO (see LobbyClient.tsx's data.mode check), so
+  // both settings tables are queried -- exactly one resolves per run.
+  const [{ data: groupSettings }, { data: soloSettings }, { data: groups }] = await Promise.all([
     supabase
       .from("group_mode_settings")
-      .select("topic, questions_per_group, time_limit_seconds, group_count")
+      .select("topic, questions_per_group, time_limit_seconds, group_count, options_count")
+      .eq("run_id", run.id)
+      .maybeSingle(),
+    supabase
+      .from("solo_mode_settings")
+      .select("topic, questions_per_person, time_limit_seconds, options_count")
       .eq("run_id", run.id)
       .maybeSingle(),
     supabase
@@ -60,6 +67,23 @@ export async function GET(
       .eq("run_id", run.id)
       .order("created_at", { ascending: true }),
   ]);
+  const settings = groupSettings
+    ? {
+        topic: groupSettings.topic,
+        questionsPerGroup: groupSettings.questions_per_group,
+        timeLimitSeconds: groupSettings.time_limit_seconds,
+        groupCount: groupSettings.group_count,
+        optionsCount: groupSettings.options_count,
+      }
+    : soloSettings
+      ? {
+          topic: soloSettings.topic,
+          questionsPerGroup: soloSettings.questions_per_person,
+          timeLimitSeconds: soloSettings.time_limit_seconds,
+          groupCount: null,
+          optionsCount: soloSettings.options_count,
+        }
+      : null;
 
   if (!groups) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
@@ -174,14 +198,7 @@ export async function GET(
 
   return NextResponse.json({
     runStatus: run.status,
-    settings: settings
-      ? {
-          topic: settings.topic,
-          questionsPerGroup: settings.questions_per_group,
-          timeLimitSeconds: settings.time_limit_seconds,
-          groupCount: settings.group_count,
-        }
-      : null,
+    settings,
     groups: groupPayload,
     allConfirmed,
   });

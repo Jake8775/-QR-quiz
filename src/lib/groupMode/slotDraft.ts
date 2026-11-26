@@ -36,18 +36,24 @@ export type ClientSlot = {
   correctOptionTempId: string | null;
 };
 
-export function slotToDraft(slot: ClientSlot): QuestionDraft {
+// optionsCount is the presenter-fixed option count for this run (GROUP's
+// group_mode_settings.options_count / SOLO's solo_mode_settings.options_
+// count) -- an empty slot is padded to exactly that many options instead
+// of a hardcoded 2, so every author starts from the same-size question
+// and (with QuestionCard's lockOptionCount) can't change it.
+export function slotToDraft(slot: ClientSlot, optionsCount: number): QuestionDraft {
+  const options =
+    slot.options.length > 0
+      ? slot.options
+      : Array.from({ length: optionsCount }, () => ({
+          tempId: crypto.randomUUID(),
+          optionText: "",
+        }));
   return {
     tempId: slot.id,
     questionText: slot.questionText,
     timeLimitSeconds: PLACEHOLDER_TIME_LIMIT,
-    options:
-      slot.options.length > 0
-        ? slot.options
-        : [
-            { tempId: crypto.randomUUID(), optionText: "" },
-            { tempId: crypto.randomUUID(), optionText: "" },
-          ],
+    options,
     correctOptionTempId: slot.correctOptionTempId ?? "",
   };
 }

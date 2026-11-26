@@ -54,6 +54,7 @@ export function GroupModeLobbyDashboard({
   startDisabled,
   startSubmitting,
   hideGroupMechanics = false,
+  optionsCount,
 }: {
   roomId: string;
   groups: GroupData[];
@@ -68,6 +69,9 @@ export function GroupModeLobbyDashboard({
   // who's in which group, not a real reassignment) are both meaningless.
   // Defaults to false so GROUP mode's render is byte-identical.
   hideGroupMechanics?: boolean;
+  // Presenter-fixed option count for this run -- passed through to the
+  // direct-edit modal so a presenter edit can't change the count either.
+  optionsCount: number;
 }) {
   const [busyGroupId, setBusyGroupId] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<GroupData | null>(null);
@@ -445,6 +449,7 @@ export function GroupModeLobbyDashboard({
           slot={editTarget.slot}
           slotIndex={editTarget.slot.slotIndex}
           submitting={busyGroupId === editTarget.group.id}
+          optionsCount={optionsCount}
           onClose={() => setEditTarget(null)}
           onSave={handleSaveSlotEdit}
         />

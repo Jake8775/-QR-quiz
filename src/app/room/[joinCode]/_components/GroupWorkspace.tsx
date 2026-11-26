@@ -9,6 +9,7 @@ import { SlotEditorWrapper, type SlotData } from "./SlotEditorWrapper";
 type WorkspaceResponse = {
   runStatus: string;
   topic: string | null;
+  optionsCount: number;
   group: { id: string; name: string; status: "DRAFTING" | "SUBMITTED" | "CONFIRMED" };
   rejectionComment: string | null;
   slots: SlotData[];
@@ -144,6 +145,7 @@ export function GroupWorkspace({ joinCode }: { joinCode: string }) {
               joinCode={joinCode}
               slot={slot}
               readOnly={readOnly}
+              optionsCount={data.optionsCount}
               onSaved={poll}
             />
           ))}

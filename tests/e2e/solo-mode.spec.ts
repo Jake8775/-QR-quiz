@@ -21,12 +21,16 @@ async function createSoloRoom(
   topic: string,
   questionsPerPerson: number,
   timeLimitSeconds: number,
+  // See group-mode.spec.ts's createGroupRoom for why this must be
+  // pinned to 2 to match fillAndSaveSlot's 2-option pattern below.
+  optionsCount = 2,
 ) {
   await presenter.goto("/admin/rooms/new-solo");
   await presenter.fill('input[placeholder="예: 자기소개"]', topic);
   const numberInputs = presenter.locator('input[type="number"]');
   await numberInputs.nth(0).fill(String(questionsPerPerson));
   await numberInputs.nth(1).fill(String(timeLimitSeconds));
+  await numberInputs.nth(2).fill(String(optionsCount));
   await presenter.getByRole("button", { name: "방 생성" }).click();
   await presenter.waitForURL(/\/admin\/rooms\/[0-9a-f-]+$/, { timeout: ASSERT_TIMEOUT });
   const roomUrl = presenter.url();

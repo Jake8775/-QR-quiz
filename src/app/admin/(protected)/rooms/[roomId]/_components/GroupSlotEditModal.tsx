@@ -13,16 +13,20 @@ export function GroupSlotEditModal({
   slot,
   slotIndex,
   submitting,
+  optionsCount,
   onClose,
   onSave,
 }: {
   slot: ClientSlot;
   slotIndex: number;
   submitting: boolean;
+  // Presenter-fixed option count for this run -- kept consistent with
+  // the member's own editor so a presenter edit can't desync the count.
+  optionsCount: number;
   onClose: () => void;
   onSave: (draft: QuestionDraft) => void;
 }) {
-  const [draft, setDraft] = useState<QuestionDraft>(() => slotToDraft(slot));
+  const [draft, setDraft] = useState<QuestionDraft>(() => slotToDraft(slot, optionsCount));
   const [error, setError] = useState<string | null>(null);
 
   function handleSave() {
@@ -48,6 +52,7 @@ export function GroupSlotEditModal({
           total={1}
           hideTimeLimit
           hideReorderControls
+          lockOptionCount
           onChange={setDraft}
           onDelete={() => {}}
           onMoveUp={() => {}}

@@ -27,11 +27,16 @@ export function SlotEditorWrapper({
   joinCode,
   slot,
   readOnly,
+  optionsCount,
   onSaved,
 }: {
   joinCode: string;
   slot: SlotData;
   readOnly: boolean;
+  // Presenter-fixed option count for this run -- an empty slot pads to
+  // exactly this many options, and QuestionCard's lockOptionCount hides
+  // the add/remove-option controls so authors can't change it.
+  optionsCount: number;
   onSaved: () => void;
 }) {
   // While not actively editing, the draft is purely derived from the
@@ -40,7 +45,7 @@ export function SlotEditorWrapper({
   // takes over (see startEditing) so further poll ticks don't overwrite
   // whatever the user is typing.
   const [editingDraft, setEditingDraft] = useState<QuestionDraft | null>(null);
-  const draft = editingDraft ?? slotToDraft(slot);
+  const draft = editingDraft ?? slotToDraft(slot, optionsCount);
   const editing = editingDraft !== null;
   const [lockVersion, setLockVersion] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,7 +79,7 @@ export function SlotEditorWrapper({
       // onChange may have already set editingDraft (optimistic keystroke)
       // before this request resolved -- only fall back to the server
       // snapshot if nothing local exists yet.
-      setEditingDraft((current) => current ?? slotToDraft(slot));
+      setEditingDraft((current) => current ?? slotToDraft(slot, optionsCount));
       heartbeatRef.current = setInterval(async () => {
         const hbRes = await fetch(
           `/room/${joinCode}/group/slot/${slot.id}/heartbeat`,
@@ -182,7 +187,10 @@ export function SlotEditorWrapper({
           total={1}
           hideTimeLimit
           hideReorderControls
+          lockOptionCount
+          disabled={readOnly}
           onChange={(next) => {
+            if (readOnly) return;
             // Optimistically reflect the keystroke locally right away;
             // the lock-acquire request runs in the background and fills
             // in lockVersion once it resolves (or surfaces an error if

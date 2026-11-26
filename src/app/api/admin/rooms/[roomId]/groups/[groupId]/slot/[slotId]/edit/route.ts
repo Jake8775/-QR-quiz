@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { questionDraftSchema } from "@/lib/validation/quiz";
 import { draftToSlotPayload } from "@/lib/groupMode/slotDraft";
+import { getOptionsCountForRun } from "@/lib/groupMode/settings";
 
 // Presenter direct-edit, SUBMITTED-only (spec: "진행자는 SUBMITTED 상태에서만
 // 문제 내용을 수정할 수 있다... DRAFTING 상태에서는 보기만 한다" -- avoids
@@ -81,6 +82,17 @@ export async function POST(
     .maybeSingle();
   if (!slot) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
+  }
+
+  // Same defensive enforcement as the member-facing save route -- the
+  // presenter's own edit modal also hides the add/remove-option
+  // controls, but a direct API call must not bypass the fixed count.
+  const optionsCount = await getOptionsCountForRun(admin, run.id);
+  if (optionsCount !== null && parsed.data.options.length !== optionsCount) {
+    return NextResponse.json(
+      { error: `보기는 정확히 ${optionsCount}개여야 합니다` },
+      { status: 400 },
+    );
   }
 
   const beforeSnapshot = {

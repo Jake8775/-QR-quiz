@@ -458,6 +458,7 @@ export interface Database {
           questions_per_group: number;
           time_limit_seconds: number;
           group_count: number;
+          options_count: number;
         };
         Insert: {
           run_id: string;
@@ -465,6 +466,7 @@ export interface Database {
           questions_per_group: number;
           time_limit_seconds: number;
           group_count: number;
+          options_count?: number;
         };
         Update: {
           run_id?: string;
@@ -472,6 +474,7 @@ export interface Database {
           questions_per_group?: number;
           time_limit_seconds?: number;
           group_count?: number;
+          options_count?: number;
         };
       };
       solo_mode_settings: {
@@ -480,18 +483,21 @@ export interface Database {
           topic: string;
           questions_per_person: number;
           time_limit_seconds: number;
+          options_count: number;
         };
         Insert: {
           run_id: string;
           topic: string;
           questions_per_person: number;
           time_limit_seconds: number;
+          options_count?: number;
         };
         Update: {
           run_id?: string;
           topic?: string;
           questions_per_person?: number;
           time_limit_seconds?: number;
+          options_count?: number;
         };
       };
       group_status_history: {
