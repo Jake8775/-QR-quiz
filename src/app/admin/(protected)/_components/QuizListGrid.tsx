@@ -167,12 +167,16 @@ function ModeColumn({
               key={quiz.id}
               className="flex flex-col gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3"
             >
-              <div className="flex items-start gap-2">
+              {/* min-h matches SOLO/GROUP's two-line badge height so this
+                  top row is the same height across every mode -- NORMAL/
+                  TEAM's one-line badge would otherwise make their row
+                  (and so the whole card) shorter than SOLO/GROUP's. */}
+              <div className="flex min-h-[34px] items-center gap-2">
                 <input
                   type="checkbox"
                   checked={selected.has(quiz.id)}
                   onChange={() => toggle(quiz.id)}
-                  className="mt-0.5 h-3.5 w-3.5 shrink-0"
+                  className="h-3.5 w-3.5 shrink-0"
                 />
                 <div className="flex items-center gap-2">
                   <p className="font-medium text-zinc-900">{quiz.title}</p>

@@ -48,7 +48,7 @@ export function GroupModeQuizRowActions({
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <div className="flex flex-wrap gap-3 text-sm">
+      <div className="flex flex-wrap items-center gap-3 text-sm">
         <button
           type="button"
           onClick={handleDelete}
@@ -57,6 +57,14 @@ export function GroupModeQuizRowActions({
         >
           삭제
         </button>
+        {/* GROUP/SOLO has no 수정/복제/방 만들기 (content is authored by
+            participants after joining, not by the presenter beforehand),
+            but NORMAL/TEAM's QuizListActions has all 4 on this row -- this
+            invisible spacer keeps both action rows (and so both cards)
+            the same height instead of GROUP/SOLO cards looking shorter. */}
+        <span aria-hidden className="invisible">
+          수정 복제 방 만들기
+        </span>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
       <RoomListForQuiz rooms={rooms} />
