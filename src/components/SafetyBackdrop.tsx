@@ -1,10 +1,14 @@
 const ITEMS = [
-  { icon: "🛡️", label: "ISO 26262" },
-  { icon: "⚙️", label: "ISO 21448" },
-  { icon: "✅", label: "SOTIF" },
-  { icon: "⚠️", label: "HARA" },
-  { icon: "🔎", label: "FMEA" },
-  { icon: "📋", label: "ASIL" },
+  { icon: "🛡️", label: "ISO 26262" }, // 기능안전(Functional Safety) 표준 전반
+  { icon: "📘", label: "ISO 21448" }, // SOTIF 표준 문서 자체
+  { icon: "🚗", label: "SOTIF" }, // 의도된 기능의 안전(차량 거동) 관점
+  { icon: "⚠️", label: "HARA" }, // 위험 분석 및 리스크 평가
+  { icon: "🔎", label: "FMEA" }, // 고장모드영향분석(조사/분석)
+  { icon: "🎯", label: "ASIL" }, // 안전무결성 등급(분류)
+  { icon: "🌳", label: "FTA" }, // 결함수 분석(트리 구조)
+  { icon: "🗺️", label: "ODD" }, // 운행설계영역(지도/범위)
+  { icon: "✔️", label: "V&V" }, // 검증 및 확인
+  { icon: "🧩", label: "STPA" }, // 시스템 이론적 공정 분석(구성요소 상호작용)
 ];
 
 // Deterministic pseudo-random generator (mulberry32) seeded with a fixed
@@ -21,14 +25,14 @@ function mulberry32(seed: number) {
   };
 }
 
-const TILE_COUNT = 34;
+const TILE_COUNT = 63;
 const rand = mulberry32(20262611);
 
-// Scatter tiles across a loose 7x5 cell grid, then jitter each one off its
+// Scatter tiles across a loose 9x7 cell grid, then jitter each one off its
 // cell's center so edges don't line up -- reads as randomly strewn rather
 // than tiled, while still spreading evenly across the whole area.
-const COLS = 7;
-const ROWS = 5;
+const COLS = 9;
+const ROWS = 7;
 const TILES = Array.from({ length: TILE_COUNT }, (_, i) => {
   const col = i % COLS;
   const row = Math.floor(i / COLS) % ROWS;
