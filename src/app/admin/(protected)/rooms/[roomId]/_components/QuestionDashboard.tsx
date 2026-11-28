@@ -12,6 +12,37 @@ function gaugeColor(ratio: number): string {
   return `hsl(${hue}, 85%, 50%)`;
 }
 
+// The clamp()'s upper bound alone isn't enough -- a long question at
+// max size wraps into many lines and pushes the option cards (and the
+// timer) off the projected screen. Scale the ceiling down as the text
+// gets longer so long questions still fit on one screen, while short
+// ones keep the original large, readable size.
+function questionFontSize(text: string): string {
+  const len = text.length;
+  if (len <= 20) return "clamp(2.25rem, 5vw, 4.75rem)";
+  if (len <= 40) return "clamp(2rem, 4.2vw, 3.75rem)";
+  if (len <= 70) return "clamp(1.75rem, 3.4vw, 3rem)";
+  if (len <= 110) return "clamp(1.5rem, 2.6vw, 2.25rem)";
+  return "clamp(1.25rem, 2vw, 1.75rem)";
+}
+
+function questionMarginClass(text: string): string {
+  const len = text.length;
+  if (len <= 40) return "mb-10";
+  if (len <= 70) return "mb-8";
+  return "mb-5";
+}
+
+// Same rationale as questionFontSize, applied to each option card's own
+// text so an unusually long option can't overflow its box either.
+function optionFontSize(text: string): string {
+  const len = text.length;
+  if (len <= 15) return "clamp(1.5rem, 2.8vw, 2.5rem)";
+  if (len <= 30) return "clamp(1.25rem, 2.4vw, 2.1rem)";
+  if (len <= 50) return "clamp(1.1rem, 2vw, 1.75rem)";
+  return "clamp(1rem, 1.6vw, 1.4rem)";
+}
+
 export function QuestionDashboard({
   questionText,
   options,
@@ -103,8 +134,8 @@ export function QuestionDashboard({
           </p>
         )}
         <h2
-          className="mt-2 mb-10 font-semibold text-zinc-900"
-          style={{ fontSize: "clamp(2.25rem, 5vw, 4.75rem)" }}
+          className={`mt-2 font-semibold text-zinc-900 ${questionMarginClass(questionText)}`}
+          style={{ fontSize: questionFontSize(questionText) }}
         >
           {questionText}
         </h2>
@@ -115,7 +146,7 @@ export function QuestionDashboard({
               <div
                 key={o.id}
                 className="rounded-xl border border-zinc-200 bg-white px-8 py-6 text-zinc-900"
-                style={{ fontSize: "clamp(1.5rem, 2.8vw, 2.5rem)" }}
+                style={{ fontSize: optionFontSize(o.text) }}
               >
                 {o.text}
               </div>
