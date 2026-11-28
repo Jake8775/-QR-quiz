@@ -82,6 +82,8 @@ export async function saveQuizAction(
         order_index: qIndex,
         question_text: q.questionText,
         time_limit_seconds: q.timeLimitSeconds,
+        max_points: q.maxPoints,
+        min_points: q.minPoints,
       })
       .select("id")
       .single();
@@ -238,7 +240,7 @@ export async function duplicateQuizAction(
 
   const { data: originalQuestions, error: qError } = await supabase
     .from("questions")
-    .select("id, order_index, question_text, time_limit_seconds")
+    .select("id, order_index, question_text, time_limit_seconds, max_points, min_points")
     .eq("quiz_id", quizId)
     .order("order_index", { ascending: true });
   if (qError || !originalQuestions) {
@@ -286,6 +288,8 @@ export async function duplicateQuizAction(
         order_index: q.order_index,
         question_text: q.question_text,
         time_limit_seconds: q.time_limit_seconds,
+        max_points: q.max_points,
+        min_points: q.min_points,
       })
       .select("id")
       .single();

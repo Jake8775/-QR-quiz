@@ -42,7 +42,7 @@ test.describe("normal mode core flow (regression)", () => {
     await card
       .locator('input[placeholder="질문을 입력하세요"]')
       .fill("회귀테스트 문제");
-    await card.locator('input[type="number"]').fill("30");
+    await card.locator('input[type="number"]').first().fill("30");
     const optionInputs = card.locator('input[placeholder="보기 내용"]');
     await optionInputs.nth(0).fill("정답");
     await optionInputs.nth(1).fill("오답");
@@ -157,7 +157,7 @@ test.describe("normal mode core flow (regression)", () => {
     await card
       .locator('input[placeholder="질문을 입력하세요"]')
       .fill("미제출 테스트 문제");
-    await card.locator('input[type="number"]').fill("5");
+    await card.locator('input[type="number"]').first().fill("5");
     const optionInputs = card.locator('input[placeholder="보기 내용"]');
     await optionInputs.nth(0).fill("정답");
     await optionInputs.nth(1).fill("오답");

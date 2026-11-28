@@ -306,6 +306,7 @@ Supabase CLI가 로컬에 연결되어 있지 않은 환경에서 작업하는 �
 | `00000000000007_group_mode.sql` | 조별 출제전(GROUP) 전체 스키마(groups/group_question_slots/잠금/설정 등) |
 | `00000000000008_team_solo_mode.sql` | 팀전(TEAM)/개인별 출제전(SOLO) 모드 추가, `solo_mode_settings` |
 | `00000000000009_group_solo_options_count.sql` | 조별/개인별 출제전에 보기 개수(몇지선다) 고정 설정 추가 |
+| `00000000000010_custom_points.sql` | 문제별(조별/개인별 출제전은 방 전체 1개) 최고점/최저점 커스텀 설정 추가 (기본값 1000/300) |
 
 ---
 

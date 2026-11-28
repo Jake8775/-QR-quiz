@@ -14,6 +14,8 @@ export function SoloRoomSetupForm() {
   const [questionsPerPerson, setQuestionsPerPerson] = useState(3);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState(30);
   const [optionsCount, setOptionsCount] = useState(4);
+  const [maxPoints, setMaxPoints] = useState(1000);
+  const [minPoints, setMinPoints] = useState(300);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -26,6 +28,8 @@ export function SoloRoomSetupForm() {
       questionsPerPerson,
       timeLimitSeconds,
       optionsCount,
+      maxPoints,
+      minPoints,
     };
     const clientCheck = soloModeSetupSchema.safeParse(input);
     if (!clientCheck.success) {
@@ -99,6 +103,30 @@ export function SoloRoomSetupForm() {
           <span className="text-xs text-zinc-400">
             모든 참가자가 이 개수로 통일해서 문제를 작성합니다
           </span>
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-zinc-700">최고점</span>
+          <input
+            type="number"
+            min={0}
+            max={10000}
+            value={maxPoints}
+            onChange={(e) => setMaxPoints(Number(e.target.value))}
+            className="w-24 rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500"
+          />
+        </label>
+
+        <label className="flex flex-col gap-1">
+          <span className="text-sm text-zinc-700">최저점</span>
+          <input
+            type="number"
+            min={0}
+            max={10000}
+            value={minPoints}
+            onChange={(e) => setMinPoints(Number(e.target.value))}
+            className="w-24 rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500"
+          />
         </label>
       </div>
 

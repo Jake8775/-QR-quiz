@@ -186,6 +186,7 @@ export function SlotEditorWrapper({
           index={slot.slotIndex}
           total={1}
           hideTimeLimit
+          hidePoints
           hideReorderControls
           lockOptionCount
           disabled={readOnly}

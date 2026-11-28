@@ -15,6 +15,8 @@ function newQuestion(): QuestionDraft {
     tempId: crypto.randomUUID(),
     questionText: "",
     timeLimitSeconds: 30,
+    maxPoints: 1000,
+    minPoints: 300,
     options: [optionA, optionB],
     correctOptionTempId: optionA.tempId,
   };
@@ -32,6 +34,8 @@ function initialBlankQuestion(): QuestionDraft {
     tempId: "initial-question",
     questionText: "",
     timeLimitSeconds: 30,
+    maxPoints: 1000,
+    minPoints: 300,
     options: [
       { tempId: "initial-option-a", optionText: "" },
       { tempId: "initial-option-b", optionText: "" },

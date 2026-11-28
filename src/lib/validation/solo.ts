@@ -21,6 +21,19 @@ export const soloModeSetupSchema = z.object({
     .int()
     .min(2, "보기 개수는 2개 이상이어야 합니다")
     .max(6, "보기 개수는 6개 이하여야 합니다"),
+  maxPoints: z
+    .number()
+    .int()
+    .min(0, "0점 이상이어야 합니다")
+    .max(10000, "10000점 이하여야 합니다"),
+  minPoints: z
+    .number()
+    .int()
+    .min(0, "0점 이상이어야 합니다")
+    .max(10000, "10000점 이하여야 합니다"),
+}).refine((v) => v.minPoints <= v.maxPoints, {
+  message: "최저점은 최고점보다 클 수 없습니다",
+  path: ["minPoints"],
 });
 
 export type SoloModeSetupInput = z.infer<typeof soloModeSetupSchema>;

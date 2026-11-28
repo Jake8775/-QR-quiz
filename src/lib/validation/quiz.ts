@@ -14,6 +14,16 @@ export const questionDraftSchema = z
       .int()
       .min(5, "5초 이상이어야 합니다")
       .max(300, "300초 이하여야 합니다"),
+    maxPoints: z
+      .number()
+      .int()
+      .min(0, "0점 이상이어야 합니다")
+      .max(10000, "10000점 이하여야 합니다"),
+    minPoints: z
+      .number()
+      .int()
+      .min(0, "0점 이상이어야 합니다")
+      .max(10000, "10000점 이하여야 합니다"),
     options: z
       .array(optionDraftSchema)
       .min(2, "보기는 최소 2개입니다")
@@ -33,7 +43,11 @@ export const questionDraftSchema = z
       message: "보기 내용이 서로 중복됩니다",
       path: ["options"],
     },
-  );
+  )
+  .refine((q) => q.minPoints <= q.maxPoints, {
+    message: "최저점은 최고점보다 클 수 없습니다",
+    path: ["minPoints"],
+  });
 
 export const quizEditorSchema = z.object({
   quizId: z.string().uuid().nullable(),

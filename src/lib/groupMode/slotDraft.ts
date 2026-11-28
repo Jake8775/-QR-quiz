@@ -12,13 +12,16 @@ export function memberNicknames(
   return (snapshot ?? []).map((m) => m.nickname);
 }
 
-// A group_question_slots row has no time limit (that's set once, run-wide,
-// in group_mode_settings) and no slot-reordering concept, but its content
-// shape (question text + options + correct answer) is otherwise identical
-// to a QuestionDraft -- so slots round-trip through the exact same
-// QuestionCard/OptionRow/questionDraftSchema the normal-mode editor uses,
-// padding in a placeholder time limit that is never read or persisted.
+// A group_question_slots row has no time limit or max/min points (those
+// are set once, run-wide, in group_mode_settings/solo_mode_settings) and
+// no slot-reordering concept, but its content shape (question text +
+// options + correct answer) is otherwise identical to a QuestionDraft --
+// so slots round-trip through the exact same QuestionCard/OptionRow/
+// questionDraftSchema the normal-mode editor uses, padding in placeholder
+// values that are never read or persisted.
 const PLACEHOLDER_TIME_LIMIT = 30;
+const PLACEHOLDER_MAX_POINTS = 1000;
+const PLACEHOLDER_MIN_POINTS = 300;
 
 export type SlotRow = {
   id: string;
@@ -53,6 +56,8 @@ export function slotToDraft(slot: ClientSlot, optionsCount: number): QuestionDra
     tempId: slot.id,
     questionText: slot.questionText,
     timeLimitSeconds: PLACEHOLDER_TIME_LIMIT,
+    maxPoints: PLACEHOLDER_MAX_POINTS,
+    minPoints: PLACEHOLDER_MIN_POINTS,
     options,
     correctOptionTempId: slot.correctOptionTempId ?? "",
   };

@@ -12,6 +12,7 @@ export function QuestionCard({
   onMoveUp,
   onMoveDown,
   hideTimeLimit = false,
+  hidePoints = false,
   hideReorderControls = false,
   disabled = false,
   lockOptionCount = false,
@@ -28,6 +29,10 @@ export function QuestionCard({
   // adding/removing/reordering slots (fixed at K, created once). Both
   // default to false so normal mode's render is byte-identical.
   hideTimeLimit?: boolean;
+  // Same rationale as hideTimeLimit -- GROUP/SOLO fix max/min points once
+  // at the run level (group_mode_settings/solo_mode_settings), not per
+  // slot.
+  hidePoints?: boolean;
   hideReorderControls?: boolean;
   // Group/solo slot editing after submission/confirmation: inputs must
   // look and behave as truly read-only (not just dimmed), so participants
@@ -135,6 +140,45 @@ export function QuestionCard({
             disabled={disabled}
             className="w-20 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100 disabled:text-zinc-500"
           />
+        </div>
+      )}
+
+      {!hidePoints && (
+        <div className="mb-3 flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-zinc-500">최고점</label>
+            <input
+              type="number"
+              min={0}
+              max={10000}
+              value={question.maxPoints}
+              onChange={(e) =>
+                onChange({
+                  ...question,
+                  maxPoints: Number(e.target.value),
+                })
+              }
+              disabled={disabled}
+              className="w-24 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100 disabled:text-zinc-500"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-zinc-500">최저점</label>
+            <input
+              type="number"
+              min={0}
+              max={10000}
+              value={question.minPoints}
+              onChange={(e) =>
+                onChange({
+                  ...question,
+                  minPoints: Number(e.target.value),
+                })
+              }
+              disabled={disabled}
+              className="w-24 rounded-md border border-zinc-300 px-2 py-1 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100 disabled:text-zinc-500"
+            />
+          </div>
         </div>
       )}
 

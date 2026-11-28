@@ -18,7 +18,7 @@ export async function loadQuizForEdit(
 
   const { data: questions } = await supabase
     .from("questions")
-    .select("id, order_index, question_text, time_limit_seconds")
+    .select("id, order_index, question_text, time_limit_seconds, max_points, min_points")
     .eq("quiz_id", quizId)
     .order("order_index", { ascending: true });
   if (!questions) return null;
@@ -55,6 +55,8 @@ export async function loadQuizForEdit(
         tempId: q.id,
         questionText: q.question_text,
         timeLimitSeconds: q.time_limit_seconds,
+        maxPoints: q.max_points,
+        minPoints: q.min_points,
         options: questionOptions.map((o) => ({
           tempId: o.id,
           optionText: o.option_text,

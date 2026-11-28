@@ -44,6 +44,8 @@ export interface Database {
           order_index: number;
           question_text: string;
           time_limit_seconds: number;
+          max_points: number;
+          min_points: number;
         };
         Insert: {
           id?: string;
@@ -51,6 +53,8 @@ export interface Database {
           order_index: number;
           question_text: string;
           time_limit_seconds: number;
+          max_points?: number;
+          min_points?: number;
         };
         Update: {
           id?: string;
@@ -58,6 +62,8 @@ export interface Database {
           order_index?: number;
           question_text?: string;
           time_limit_seconds?: number;
+          max_points?: number;
+          min_points?: number;
         };
       };
       options: {
@@ -167,6 +173,8 @@ export interface Database {
           order_index: number;
           question_text: string;
           time_limit_seconds: number;
+          max_points: number;
+          min_points: number;
         };
         Insert: {
           id?: string;
@@ -176,6 +184,8 @@ export interface Database {
           order_index: number;
           question_text: string;
           time_limit_seconds: number;
+          max_points?: number;
+          min_points?: number;
         };
         Update: {
           id?: string;
@@ -185,6 +195,8 @@ export interface Database {
           order_index?: number;
           question_text?: string;
           time_limit_seconds?: number;
+          max_points?: number;
+          min_points?: number;
         };
       };
       run_options: {
@@ -459,6 +471,8 @@ export interface Database {
           time_limit_seconds: number;
           group_count: number;
           options_count: number;
+          max_points: number;
+          min_points: number;
         };
         Insert: {
           run_id: string;
@@ -467,6 +481,8 @@ export interface Database {
           time_limit_seconds: number;
           group_count: number;
           options_count?: number;
+          max_points?: number;
+          min_points?: number;
         };
         Update: {
           run_id?: string;
@@ -475,6 +491,8 @@ export interface Database {
           time_limit_seconds?: number;
           group_count?: number;
           options_count?: number;
+          max_points?: number;
+          min_points?: number;
         };
       };
       solo_mode_settings: {
@@ -484,6 +502,8 @@ export interface Database {
           questions_per_person: number;
           time_limit_seconds: number;
           options_count: number;
+          max_points: number;
+          min_points: number;
         };
         Insert: {
           run_id: string;
@@ -491,6 +511,8 @@ export interface Database {
           questions_per_person: number;
           time_limit_seconds: number;
           options_count?: number;
+          max_points?: number;
+          min_points?: number;
         };
         Update: {
           run_id?: string;
@@ -498,6 +520,8 @@ export interface Database {
           questions_per_person?: number;
           time_limit_seconds?: number;
           options_count?: number;
+          max_points?: number;
+          min_points?: number;
         };
       };
       group_status_history: {

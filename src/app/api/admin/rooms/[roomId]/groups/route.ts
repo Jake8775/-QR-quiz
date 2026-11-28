@@ -53,12 +53,14 @@ export async function GET(
   const [{ data: groupSettings }, { data: soloSettings }, { data: groups }] = await Promise.all([
     supabase
       .from("group_mode_settings")
-      .select("topic, questions_per_group, time_limit_seconds, group_count, options_count")
+      .select(
+        "topic, questions_per_group, time_limit_seconds, group_count, options_count, max_points, min_points",
+      )
       .eq("run_id", run.id)
       .maybeSingle(),
     supabase
       .from("solo_mode_settings")
-      .select("topic, questions_per_person, time_limit_seconds, options_count")
+      .select("topic, questions_per_person, time_limit_seconds, options_count, max_points, min_points")
       .eq("run_id", run.id)
       .maybeSingle(),
     supabase
@@ -74,6 +76,8 @@ export async function GET(
         timeLimitSeconds: groupSettings.time_limit_seconds,
         groupCount: groupSettings.group_count,
         optionsCount: groupSettings.options_count,
+        maxPoints: groupSettings.max_points,
+        minPoints: groupSettings.min_points,
       }
     : soloSettings
       ? {
@@ -82,6 +86,8 @@ export async function GET(
           timeLimitSeconds: soloSettings.time_limit_seconds,
           groupCount: null,
           optionsCount: soloSettings.options_count,
+          maxPoints: soloSettings.max_points,
+          minPoints: soloSettings.min_points,
         }
       : null;
 

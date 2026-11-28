@@ -62,7 +62,14 @@ export async function createRoomAndRun(
 }
 
 type QuizSnapshotData = {
-  questions: { id: string; order_index: number; question_text: string; time_limit_seconds: number }[];
+  questions: {
+    id: string;
+    order_index: number;
+    question_text: string;
+    time_limit_seconds: number;
+    max_points: number;
+    min_points: number;
+  }[];
   options: { id: string; question_id: string; order_index: number; option_text: string }[];
   answerKeys: { question_id: string; correct_option_id: string }[];
 };
@@ -82,7 +89,7 @@ export async function loadQuizSnapshotData(
 ): Promise<{ data: QuizSnapshotData } | { error: string }> {
   const { data: questions, error: qError } = await supabase
     .from("questions")
-    .select("id, order_index, question_text, time_limit_seconds")
+    .select("id, order_index, question_text, time_limit_seconds, max_points, min_points")
     .eq("quiz_id", quizId)
     .order("order_index", { ascending: true });
   if (qError || !questions) {
@@ -148,6 +155,8 @@ export async function writeRunSnapshot(
         order_index: q.order_index,
         question_text: q.question_text,
         time_limit_seconds: q.time_limit_seconds,
+        max_points: q.max_points,
+        min_points: q.min_points,
       })
       .select("id")
       .single();

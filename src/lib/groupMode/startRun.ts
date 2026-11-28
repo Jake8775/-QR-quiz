@@ -62,6 +62,8 @@ async function flattenAndStart(
   supabase: Awaited<ReturnType<typeof createClient>>,
   runId: string,
   timeLimitSeconds: number,
+  maxPoints: number,
+  minPoints: number,
 ): Promise<{ error?: string; status?: number }> {
   const { data: groups } = await supabase
     .from("groups")
@@ -135,6 +137,8 @@ async function flattenAndStart(
         order_index: orderIndex,
         question_text: slot.question_text,
         time_limit_seconds: timeLimitSeconds,
+        max_points: maxPoints,
+        min_points: minPoints,
       })
       .select("id")
       .single();
@@ -215,13 +219,19 @@ export async function startGroupModeRun(
 ): Promise<{ error?: string; status?: number }> {
   const { data: settings } = await supabase
     .from("group_mode_settings")
-    .select("time_limit_seconds")
+    .select("time_limit_seconds, max_points, min_points")
     .eq("run_id", runId)
     .maybeSingle();
   if (!settings) {
     return { error: "조별모드 설정을 찾을 수 없습니다", status: 409 };
   }
-  return flattenAndStart(supabase, runId, settings.time_limit_seconds);
+  return flattenAndStart(
+    supabase,
+    runId,
+    settings.time_limit_seconds,
+    settings.max_points,
+    settings.min_points,
+  );
 }
 
 // Thin wrapper: SOLO mode's own settings table + the same shared
@@ -234,11 +244,17 @@ export async function startSoloModeRun(
 ): Promise<{ error?: string; status?: number }> {
   const { data: settings } = await supabase
     .from("solo_mode_settings")
-    .select("time_limit_seconds")
+    .select("time_limit_seconds, max_points, min_points")
     .eq("run_id", runId)
     .maybeSingle();
   if (!settings) {
     return { error: "개인별 출제전 설정을 찾을 수 없습니다", status: 409 };
   }
-  return flattenAndStart(supabase, runId, settings.time_limit_seconds);
+  return flattenAndStart(
+    supabase,
+    runId,
+    settings.time_limit_seconds,
+    settings.max_points,
+    settings.min_points,
+  );
 }

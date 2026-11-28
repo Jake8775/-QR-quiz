@@ -72,7 +72,7 @@ export async function POST(
 
   const { data: currentQuestion } = await admin
     .from("run_questions")
-    .select("id, time_limit_seconds, source_group_id")
+    .select("id, time_limit_seconds, source_group_id, max_points, min_points")
     .eq("run_id", run.id)
     .eq("order_index", run.current_question_index)
     .maybeSingle();
@@ -141,6 +141,8 @@ export async function POST(
         now,
         new Date(state.opened_at),
         currentQuestion.time_limit_seconds,
+        currentQuestion.max_points,
+        currentQuestion.min_points,
       )
     : 0;
 

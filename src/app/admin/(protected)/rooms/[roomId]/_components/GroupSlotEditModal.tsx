@@ -51,6 +51,7 @@ export function GroupSlotEditModal({
           index={slotIndex}
           total={1}
           hideTimeLimit
+          hidePoints
           hideReorderControls
           lockOptionCount
           onChange={setDraft}
