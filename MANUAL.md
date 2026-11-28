@@ -103,7 +103,8 @@ Supabase는 세 가지 역할을 동시에 함:
 1. **Postgres 데이터베이스** — 퀴즈, 방(room), 참가자, 답변, 점수 등 모든 데이터가 저장되는 곳.
 2. **로그인 인증(Auth)** — 진행자(presenter) 계정의 이메일/비밀번호 로그인을 처리.
 3. **RLS(Row Level Security)** — "누가 어떤 데이터를 볼 수 있는지"를 DB 차원에서 강제하는 보안 규칙.
-   예: 참가자는 정답 데이터(`answer_keys` 테이블)를 절대 읽을 수 없도록 설계되어 있음.
+   예: 참가자는 정답 데이터(`question_answer_keys`/`run_answer_keys` 테이블)를
+   절대 읽을 수 없도록 설계되어 있음.
 
 Supabase 프로젝트 URL: `https://sbqbigqdixaebrozgfgs.supabase.co`
 
